@@ -1,103 +1,93 @@
-# 📊 Disparador de Mensagens - Controle Orçamentário via WhatsApp
+📊 Disparador de Mensagens - Sistema Orçamentário
 
-Sistema web desenvolvido para leitura de arquivos Excel (.xlsx, .xls ou .csv), processamento de dados orçamentários e envio automatizado de mensagens via API WhatsApp para setores definidos.
+Sistema web para envio de mensagens via API de WhatsApp com base em dados orçamentários de setores carregados a partir de planilhas Excel.
 
----
+🚀 Funcionalidades
 
-## 🚀 Funcionalidades
+Upload de 3 planilhas (.xlsx/.xls/.csv):
 
-- Leitura de 3 planilhas: Orçamento Geral, Orçamento por Categoria e Contatos
-- Análise de consumo por setor (ultrapassado, próximo, controlado)
-- Geração automática de mensagens de alerta orçamentário
-- Disparo em massa via API WhatsApp com até **3 tentativas por setor**
-- Interface visual moderna com painéis e logs em tempo real
+Orçamento Geral
 
----
+Orçamento por Categoria
 
-## 🧰 Tecnologias Utilizadas
+Contatos dos Setores
 
-- HTML5 + CSS3 + JavaScript
-- Biblioteca [xlsx](https://cdnjs.com/libraries/xlsx) para leitura de planilhas
-- API REST para envio de mensagens via WhatsApp
+Geração automática de relatório de controle orçamentário
 
----
+Disparo de mensagens personalizadas para cada setor via WhatsApp API
 
-## 🖥️ Como Rodar o Projeto
+Reenvio automático em caso de falha (até 3 tentativas)
 
-### 1. Clone o repositório
+Log de sucesso e falhas
 
-```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
-cd disparador-orcamento
-```
+Interface responsiva e simples
 
-### 2. Inicie um servidor local (exemplo com Node.js ou Python)
+📁 Estrutura do Projeto
 
-#### Usando VS Code + extensão Live Server (recomendado):
-- Clique com botão direito em `index.html` > **"Open with Live Server"**
+seu-projeto/
+├── public/
+│   ├── index.html       # Interface web
+│   ├── style.css        # Estilos da página
+│   └── app.js           # Lógica JS (carregamento, processamento, envio)
+├── server.js            # Backend Express que envia mensagens para API
+├── .env                 # Configuração da API WhatsApp (URL, KEY, etc.)
+├── package.json         # Dependências e scripts
+└── README.md
 
-#### Alternativa via terminal com Python 3:
-```bash
-python -m http.server
-# Acesse http://localhost:8000
-```
+⚙️ Configuração Inicial
 
----
+1. Instalar dependências:
 
-## 📁 Estrutura esperada dos arquivos
+npm install
 
-### 🗂️ Arquivo 1: `arquivodedados.xlsx` (Orçamento Geral)
+2. Criar o arquivo .env
 
-| Setor      | ORÇADO | REALIZADO |
-|------------|--------|-----------|
-| Marketing  | 10000  | 9500      |
+Crie um arquivo .env na raiz com o seguinte conteúdo:
 
-### 🗂️ Arquivo 2: `OrcamentoCategoria.xlsx` (Por Classificação)
+API_URL=http://192.168.99.41:8080
+API_INSTANCE=MensageiroOrcamento
+API_KEY=T0pF4m4D3vs
 
-| Setor      | Classificação     | ORÇADO | REALIZADO |
-|------------|-------------------|--------|-----------|
-| Marketing  | Google Ads        | 3000   | 3200      |
+Obs: Esses dados são usados apenas no backend e ficam protegidos.
 
-### 🗂️ Arquivo 3: `contato_setores.xlsx` (Contatos)
+3. Iniciar o servidor
 
-| nome_setor | numero           |
-|------------|------------------|
-| Marketing  | 81999999999      |
+node server.js
 
-> ⚠️ Os números devem estar no padrão nacional. O sistema irá padronizar para `55XXXXXXXXXXX`.
+Ou com nodemon (se instalado):
 
----
+npx nodemon server.js
 
-## ⚙️ Configuração da API WhatsApp
+Acesse em:
 
-Na interface principal, preencha:
+http://localhost:3000
 
-- **URL da API**: `http://192.168.99.41:8080`
-- **Instância**: `MensageiroOrcamento` (nome registrado na sua API)
-- **Chave da API**: `T0pF4m4D3vs` (ou a sua chave)
+📤 Como Usar
 
-Clique em **"🔍 Testar Conexão"** para validar.
+Abra a página principal no navegador
 
----
+Carregue os 3 arquivos Excel correspondentes
 
-## 📤 Como utilizar
+Visualize os setores, status orçamentário e estatísticas
 
-1. Acesse a interface local pelo navegador
-2. Preencha a configuração da API
-3. Carregue os 3 arquivos exigidos
-4. Aguarde o processamento dos dados
-5. Clique em **“📤 Disparar Mensagens para Setores”**
+Clique em “Disparar Mensagens”
 
-> O sistema irá enviar uma mensagem personalizada para cada setor detectado com base nas planilhas.
+O sistema processa, envia via API e exibe o log
 
----
+🛠 Tecnologias Usadas
 
-## 🛡️ Segurança
+Front-end: HTML, CSS, JavaScript puro, XLSX.js
 
-Evite subir sua `apikey` em repositórios públicos. Adicione um `.gitignore` e guarde essas informações em `.env` ou configuráveis.
+Back-end: Node.js + Express + dotenv + axios
 
----
+✅ Observações Importantes
 
-## 👨‍💻 Desenvolvido por
+A API do WhatsApp precisa estar rodando e acessível pela rede
 
-AutomatizAI • Especialista em automação com n8n, Python, APIs e UIs
+Os arquivos Excel devem ter estrutura compatível com o sistema
+
+Os campos de configuração da API foram retirados do front e são definidos via .env
+
+📄 Licença
+
+Projeto desenvolvido para uso interno. Caso queira customizar ou reutilizar, adapte conforme necessidade.
