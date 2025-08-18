@@ -1,11 +1,13 @@
+// server.js
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const axios = require('axios');
+
 const app = express();
 const PORT = 3000;
-// Middleware para JSON e arquivos estáticos
 
+// Middleware para JSON e arquivos estáticos
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -14,7 +16,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Nova rota para enviar mensagens via backend
+// Rota para enviar mensagens via backend
 app.post('/api/send-message', async (req, res) => {
     const { number, text } = req.body;
 
@@ -39,6 +41,43 @@ app.post('/api/send-message', async (req, res) => {
             error: true,
             message: error.message || 'Erro interno'
         });
+    }
+});
+
+// Rota para testar conexão com a API
+app.get('/api/testar-conexao', async (req, res) => {
+    try {
+        const response = await axios.get(`${process.env.API_URL}/instance/${process.env.API_INSTANCE}`, {
+            headers: {
+                apikey: process.env.API_KEY
+            }
+        });
+
+        res.json({ instance: response.data });
+    } catch (error) {
+        res.status(500).json({ error: true, message: error.message });
+    }
+});
+
+// Rota para obter QR Code (agora sem :instance)
+app.get('/api/qrcode', async (req, res) => {
+    const instance = process.env.API_INSTANCE;
+
+    try {
+        const response = await axios.get(`${process.env.API_URL}/instance/connect/${instance}`, {
+            headers: {
+                apikey: process.env.API_KEY
+            }
+        });
+
+        const data = response.data;
+        if (data?.base64) {
+            res.json({ qrcode: data.base64 });
+        } else {
+            res.json({ message: 'Instância já conectada ou QR Code não disponível.' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: true, message: error.message });
     }
 });
 

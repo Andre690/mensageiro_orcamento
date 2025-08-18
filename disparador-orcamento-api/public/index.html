@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <link rel="icon" type="image/x-icon" href="favicon.ico\">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disparador de Mensagens - Orçamento</title>
@@ -18,27 +19,20 @@
         <div class="main-content">
             <!-- Configuração da API -->
             <div class="config-section">
-                <h2>⚙️ Configuração da API WhatsApp 
+                <h2>⚙️ Conexão com a API WhatsApp 
                     <span class="api-status offline" id="apiStatus">OFFLINE</span>
                 </h2>
-                <div class="config-grid">
-                    <div class="config-field">
-                        <label for="apiUrl">URL da API:</label>
-                        <input type="text" id="apiUrl" value="http://192.168.99.41:8080" placeholder="Ex: http://192.168.99.41:8080">
-                    </div>
-                    <div class="config-field">
-                        <label for="apiInstance">Instância:</label>
-                        <input type="text" id="apiInstance" value="MensageiroOrcamento" placeholder="Nome da instância">
-                    </div>
-                    <div class="config-field">
-                        <label for="apiKey">Chave da API:</label>
-                        <input type="text" id="apiKey" value="T0pF4m4D3vs" placeholder="Sua chave da API">
-                    </div>
-                    <div style="display: flex; align-items: end;">
-                        <button class="test-api-btn" onclick="window.testarAPI()">🔍 Testar Conexão</button>
-                    </div>
+                <div class="config-grid" style="justify-content: space-between;">
+                    <button class="btn" onclick="window.testarAPI()">🔍 Testar Conexão</button>
+                    <button class="btn success" onclick="window.exibirQRCode()">📱 Conectar WhatsApp</button>
+                </div>
+
+                <div id="qrCodeContainer" style="display:none; margin-top: 15px; text-align: center;">
+                    <p>📷 Escaneie o QR Code abaixo para conectar o WhatsApp:</p>
+                    <img id="qrCodeImage" src="" alt="QR Code" style="max-width: 250px; border: 5px solid #25D366; border-radius: 12px;">
                 </div>
             </div>
+
 
             <!-- Upload de Arquivos -->
             <div class="section">

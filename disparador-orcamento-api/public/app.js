@@ -25,47 +25,28 @@
         };
 
         // Função para testar a API
-        window.testarAPI = function() {
-            const apiUrl = document.getElementById('apiUrl').value.trim();
-            const apiInstance = document.getElementById('apiInstance').value.trim();
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const statusElement = document.getElementById('apiStatus');
+            window.testarAPI = async function () {
+    try {
+        const response = await fetch('/api/testar-conexao');
+        const data = await response.json();
 
-            if (!apiUrl || !apiInstance || !apiKey) {
-                window.adicionarLog('error', 'Por favor, preencha todos os campos da API');
-                return;
-            }
+        console.log('Resposta da API:', data);
 
-            statusElement.textContent = 'TESTANDO...';
-            statusElement.className = 'api-status testing';
-            
-            window.adicionarLog('info', 'Testando conexão com a API...');
+        const estado = data.instance?.state || data.instance?.status || 'desconhecido';
 
-            const url = `${apiUrl}/instance/fetchInstances`;
-            
-            fetch(url, {
-                method: 'GET',
-                headers: {
-                    'apikey': apiKey,
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    statusElement.textContent = 'ONLINE';
-                    statusElement.className = 'api-status online';
-                    window.adicionarLog('success', '✅ API conectada com sucesso!');
-                } else {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
-            })
-            .catch(error => {
-                statusElement.textContent = 'OFFLINE';
-                statusElement.className = 'api-status offline';
-                window.adicionarLog('error', `❌ Erro ao conectar com a API: ${error.message}`);
-                window.adicionarLog('warning', '⚠️ Verifique se a API está rodando e se a URL/chave estão corretas');
-            });
-        };
+        if (estado === 'CONNECTED' || estado === 'connected') {
+            document.getElementById('apiStatus').textContent = 'ONLINE';
+            document.getElementById('apiStatus').className = 'api-status online';
+            window.adicionarLog('success', '✅ API conectada com sucesso.');
+        } else {
+            window.adicionarLog('warning', `⚠️ API respondeu, mas o estado é: ${estado}`);
+        }
+    } catch (error) {
+        window.adicionarLog('error', `❌ Erro ao testar API: ${error.message}`);
+    }
+};
+
+
 
         // Função para formatar número de telefone
         window.formatarTelefone = function(numero) {
@@ -688,6 +669,33 @@ window.enviarMensagemWhatsAppComRetry = async function(mensagem, telefone, tenta
                 window.testarAPI();
             }, 1000);
         });
+        //Exibir QR Code
+window.exibirQRCode = async function () {
+    const qrImg = document.getElementById('qrCodeImage');
+    const qrContainer = document.getElementById('qrCodeContainer');
+    qrContainer.style.display = 'block';
+    qrImg.src = '';
+    qrImg.alt = 'Carregando...';
+
+    try {
+        const response = await fetch('/api/qrcode');
+        const data = await response.json();
+
+        if (data.qrcode) {
+            qrImg.src = data.qrcode;
+            qrImg.alt = 'QR Code';
+            window.adicionarLog('info', '📱 QR Code carregado com sucesso.');
+        } else {
+            qrImg.alt = 'Nenhum QR Code necessário';
+            window.adicionarLog('warning', `ℹ️ ${data.message || 'Instância já conectada'}`);
+        }
+    } catch (err) {
+        qrImg.alt = 'Erro ao carregar QR Code';
+        window.adicionarLog('error', `❌ Erro ao buscar QR Code: ${err.message}`);
+    }
+};
+
+
 
         // Adiciona listener para mudanças nos campos da API
         ['apiUrl', 'apiInstance', 'apiKey'].forEach(fieldId => {
