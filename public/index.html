@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disparador de Mensagens - Orçamento</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Disparador de Mensagens</h1>
+            <p>Sistema de Controle Orçamentário - WhatsApp</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- Configuração da API -->
+            <!--><div class="config-section">
+                <h2>⚙️ Configuração da API WhatsApp 
+                    <span class="api-status offline" id="apiStatus">OFFLINE</span>
+                </h2>
+                <div class="config-grid">
+                    <div class="config-field">
+                        <label for="apiUrl">URL da API:</label>
+                        <input type="text" id="apiUrl" value="http://192.168.99.41:8080" placeholder="Ex: http://192.168.99.41:8080">
+                    </div>
+                    <div class="config-field">
+                        <label for="apiInstance">Instância:</label>
+                        <input type="text" id="apiInstance" value="MensageiroOrcamento" placeholder="Nome da instância">
+                    </div>
+                    <div class="config-field">
+                        <label for="apiKey">Chave da API:</label>
+                        <input type="text" id="apiKey" value="T0pF4m4D3vs" placeholder="Sua chave da API">
+                    </div>
+                    <div style="display: flex; align-items: end;">
+                        <button class="test-api-btn" onclick="window.testarAPI()">🔍 Testar Conexão</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload de Arquivos -->
+            <div class="section">
+                <h2>📋 Carregar Planilhas
+                    <button class="refresh-btn" onclick="window.recarregarDados()">🔄 Atualizar</button>
+                </h2>
+                <div class="alert alert-info">
+                    <strong>💡 Dica:</strong> Carregue as 3 planilhas (Excel .xlsx/.xls ou CSV) para visualizar os dados mais recentes. Os arquivos serão processados automaticamente.
+                </div>
+                <div class="file-upload">
+                    <div class="upload-card" id="uploadCard1">
+                        <div class="file-icon">📊</div>
+                        <strong>Orçamento Geral</strong>
+                        <p style="margin: 10px 0; color: #666;">arquivodedados.xlsx</p>
+                        <div class="file-label" onclick="document.getElementById('fileSetor').click()">
+                            📤 Carregar Arquivo
+                        </div>
+                        <input type="file" id="fileSetor" class="file-input" accept=".xlsx,.xls,.csv" onchange="window.carregarArquivoSetor(event)">
+                        <div id="statusSetor">Aguardando arquivo...</div>
+                    </div>
+                    
+                    <div class="upload-card" id="uploadCard2">
+                        <div class="file-icon">📋</div>
+                        <strong>Orçamento Categoria</strong>
+                        <p style="margin: 10px 0; color: #666;">OrcamentoCategoria.xlsx</p>
+                        <div class="file-label" onclick="document.getElementById('fileCategoria').click()">
+                            📤 Carregar Arquivo
+                        </div>
+                        <input type="file" id="fileCategoria" class="file-input" accept=".xlsx,.xls,.csv" onchange="window.carregarArquivoCategoria(event)">
+                        <div id="statusCategoria">Aguardando arquivo...</div>
+                    </div>
+                    
+                    <div class="upload-card" id="uploadCard3">
+                        <div class="file-icon">📞</div>
+                        <strong>Contatos Setores</strong>
+                        <p style="margin: 10px 0; color: #666;">contato_setores.xlsx</p>
+                        <div class="file-label" onclick="document.getElementById('fileContatos').click()">
+                            📤 Carregar Arquivo
+                        </div>
+                        <input type="file" id="fileContatos" class="file-input" accept=".xlsx,.xls,.csv" onchange="window.carregarArquivoContatos(event)">
+                        <div id="statusContatos">Aguardando arquivo...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estatísticas Gerais -->
+            <div class="stats-grid">
+                <div class="stat-card danger">
+                    <div class="stat-number" id="setoresUltrapassados">-</div>
+                    <div class="stat-label">🚨 Setores Ultrapassados</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-number" id="setoresProximos">-</div>
+                    <div class="stat-label">⚠️ Setores Próximos (90%+)</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-number" id="setoresControlados">-</div>
+                    <div class="stat-label">✅ Setores Controlados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalSetores">-</div>
+                    <div class="stat-label">📈 Total de Setores</div>
+                </div>
+            </div>
+            
+            <!-- Relatório de Setores -->
+            <div class="section">
+                <h2>📈 Situação dos Setores</h2>
+                <div id="setoresList">
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Atenção:</strong> Carregue os arquivos Excel acima para visualizar os dados dos setores.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botão Disparador -->
+            <button class="btn" id="disparadorBtn" onclick="window.dispararMensagens()" disabled>
+                <span>📤</span>
+                Disparar Mensagens para Setores
+            </button>
+            
+            <!-- Log de Envios -->
+            <div class="section">
+                <h2>📝 Log de Envios</h2>
+                <div class="log-container" id="logContainer">
+                    <div class="log-item log-info">
+                        Sistema inicializado. Configure a API e carregue os arquivos Excel para começar...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
