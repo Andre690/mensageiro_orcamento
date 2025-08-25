@@ -5,6 +5,19 @@
         window.dadosContatos = null;
         window.dadosProcessados = [];
 
+        // Função para parse de número
+        window.parseNumero = function (valor) {
+            if (typeof valor === 'number') return valor;
+            if (!valor || typeof valor !== 'string') return 0;
+
+            return parseFloat(
+                valor
+                    .replace(/[^\d,.-]/g, '')     // Remove R$, espaços, etc
+                    .replace(/\.(?=\d{3,})/g, '') // Remove pontos de milhar
+                    .replace(/,/g, '.')             // Troca vírgula por ponto decimal
+            ) || 0;
+        };
+
         // Função para adicionar logs
         window.adicionarLog = function(tipo, mensagem, timestamp = new Date()) {
             const logContainer = document.getElementById('logContainer');
@@ -25,16 +38,16 @@
         };
 
         // Função para testar a API
-            window.testarAPI = async function () {
+           window.testarAPI = async function () {
     try {
         const response = await fetch('/api/testar-conexao');
         const data = await response.json();
 
         console.log('Resposta da API:', data);
 
-        const estado = data.instance?.state || data.instance?.status || 'desconhecido';
+        const estado = data.raw?.instance?.state || data.state || 'desconhecido';
 
-        if (estado === 'CONNECTED' || estado === 'connected') {
+        if (estado === 'open' || estado === 'CONNECTED')  {
             document.getElementById('apiStatus').textContent = 'ONLINE';
             document.getElementById('apiStatus').className = 'api-status online';
             window.adicionarLog('success', '✅ API conectada com sucesso.');
@@ -66,8 +79,11 @@
             }
             
             // Garante que tem pelo menos 13 dígitos (55 + DDD + 9 dígitos)
-            if (tel.length < 13) {
-                window.adicionarLog('warning', `⚠️ Número ${numero} pode estar incompleto: ${tel}`);
+          if (tel.length < 13) {
+                window.adicionarLog("warning", `⚠️ Número ${numero} pode estar incompleto: ${tel}`);
+            } else if (tel.length > 13) {
+                tel = tel.substring(0, 13);
+                window.adicionarLog("warning", `⚠️ Número ${numero} foi truncado para 13 dígitos: ${tel}`);
             }
             
             return tel;
@@ -148,37 +164,44 @@
 
         // Funções de carregamento de arquivos
         window.carregarArquivoSetor = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        const file = event.target.files[0];
+        if (!file) return;
 
-            window.processarArquivo(file, (error, dados) => {
-                if (error) {
-                    window.adicionarLog('error', `Erro ao carregar arquivo de orçamento geral: ${error.message}`);
-                    document.getElementById('statusSetor').innerHTML = '❌ Erro';
-                    document.getElementById('statusSetor').style.color = '#dc3545';
-                    return;
-                }
+        window.processarArquivo(file, (error, dados) => {
+            if (error) {
+                window.adicionarLog('error', `Erro ao carregar arquivo de orçamento geral: ${error.message}`);
+                document.getElementById('statusSetor').innerHTML = '❌ Erro';
+                document.getElementById('statusSetor').style.color = '#dc3545';
+                return;
+            }
 
-                // Validação específica para arquivo de setores
-                const primeiroItem = dados[0];
-                if (!primeiroItem.hasOwnProperty('Setor') || !primeiroItem.hasOwnProperty('ORÇADO')) {
-                    window.adicionarLog('error', 'Arquivo de orçamento geral deve conter as colunas "Setor" e "ORÇADO"');
-                    document.getElementById('statusSetor').innerHTML = '❌ Formato Inválido';
-                    document.getElementById('statusSetor').style.color = '#dc3545';
-                    return;
-                }
+            // Filtrar linhas com Setor vazio
+            dados = dados.filter(item => item.Setor && item["ORÇAMENTO TOTAL"]);
 
-                window.dadosSetor = dados;
-                document.getElementById('statusSetor').innerHTML = '✅ Carregado';
-                document.getElementById('statusSetor').style.color = '#28a745';
-                document.getElementById('uploadCard1').classList.add('loaded');
-                
-                window.adicionarLog('success', `Arquivo de orçamento geral carregado: ${window.dadosSetor.length} registros`);
-                window.processarDados();
+            const primeiroItem = dados[0];
+            if (!primeiroItem?.Setor || !primeiroItem["ORÇAMENTO TOTAL"]) {
+                window.adicionarLog('error', 'Arquivo de orçamento geral deve conter as colunas "Setor" e "ORÇAMENTO TOTAL"');
+                document.getElementById('statusSetor').innerHTML = '❌ Formato Inválido';
+                document.getElementById('statusSetor').style.color = '#dc3545';
+                return;
+            }
+
+            dados.forEach(d => {
+                d["ORÇAMENTO TOTAL"] = window.parseNumero(d["ORÇAMENTO TOTAL"]);
+                d.REALIZADO = window.parseNumero(d.REALIZADO);
             });
-        };
 
-        window.carregarArquivoCategoria = function(event) {
+            window.dadosSetor = dados;
+            document.getElementById('statusSetor').innerHTML = '✅ Carregado';
+            document.getElementById('statusSetor').style.color = '#28a745';
+            document.getElementById('uploadCard1').classList.add('loaded');
+
+            window.adicionarLog('success', `Arquivo de orçamento geral carregado: ${window.dadosSetor.length} registros`);
+            window.processarDados();
+        });
+    };
+
+            window.carregarArquivoCategoria = function(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -190,26 +213,32 @@
                     return;
                 }
 
-                // Validação específica para arquivo de categorias
-                const primeiroItem = dados[0];
-                if (!primeiroItem.hasOwnProperty('Setor') || !primeiroItem.hasOwnProperty('Classificação')) {
-                    window.adicionarLog('error', 'Arquivo de categoria deve conter as colunas "Setor" e "Classificação"');
-                    document.getElementById('statusCategoria').innerHTML = '❌ Formato Inválido';
-                    document.getElementById('statusCategoria').style.color = '#dc3545';
-                    return;
-                }
+            dados = dados.filter(item => item.Setor && item.Classificação);
 
-                window.dadosCategoria = dados;
-                document.getElementById('statusCategoria').innerHTML = '✅ Carregado';
-                document.getElementById('statusCategoria').style.color = '#28a745';
-                document.getElementById('uploadCard2').classList.add('loaded');
-                
-                window.adicionarLog('success', `Arquivo de orçamento por categoria carregado: ${window.dadosCategoria.length} registros`);
-                window.processarDados();
+            const primeiroItem = dados[0];
+            if (!primeiroItem?.Setor || !primeiroItem.Classificação) {
+                window.adicionarLog('error', 'Arquivo de categoria deve conter as colunas "Setor" e "Classificação"');
+                document.getElementById('statusCategoria').innerHTML = '❌ Formato Inválido';
+                document.getElementById('statusCategoria').style.color = '#dc3545';
+                return;
+            }
+
+            dados.forEach(d => {
+                d["ORÇAMENTO TOTAL"] = window.parseNumero(d["ORÇAMENTO TOTAL"]);
+                d.REALIZADO = window.parseNumero(d.REALIZADO);
             });
-        };
 
-        window.carregarArquivoContatos = function(event) {
+            window.dadosCategoria = dados;
+            document.getElementById('statusCategoria').innerHTML = '✅ Carregado';
+            document.getElementById('statusCategoria').style.color = '#28a745';
+            document.getElementById('uploadCard2').classList.add('loaded');
+
+            window.adicionarLog('success', `Arquivo de orçamento por categoria carregado: ${window.dadosCategoria.length} registros`);
+            window.processarDados();
+        });
+    };
+
+            window.carregarArquivoContatos = function(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -221,103 +250,89 @@
                     return;
                 }
 
-                // Validação específica para arquivo de contatos
-                const primeiroItem = dados[0];
-                if (!primeiroItem.hasOwnProperty('nome_setor') || !primeiroItem.hasOwnProperty('numero')) {
-                    window.adicionarLog('error', 'Arquivo de contatos deve conter as colunas "nome_setor" e "numero"');
-                    document.getElementById('statusContatos').innerHTML = '❌ Formato Inválido';
-                    document.getElementById('statusContatos').style.color = '#dc3545';
-                    return;
-                }
+        const primeiroItem = dados[0];
+        if (!primeiroItem?.nome_setor || !primeiroItem.numero) {
+            window.adicionarLog('error', 'Arquivo de contatos deve conter as colunas "nome_setor" e "numero"');
+            document.getElementById('statusContatos').innerHTML = '❌ Formato Inválido';
+            document.getElementById('statusContatos').style.color = '#dc3545';
+            return;
+        }
 
-                // Formatar números de telefone
-                dados.forEach(contato => {
-                    contato.numero = window.formatarTelefone(contato.numero);
-                });
+        dados.forEach(contato => {
+            contato.numero = window.formatarTelefone(contato.numero);
+        });
 
-                window.dadosContatos = dados;
-                document.getElementById('statusContatos').innerHTML = '✅ Carregado';
-                document.getElementById('statusContatos').style.color = '#28a745';
-                document.getElementById('uploadCard3').classList.add('loaded');
-                
-                window.adicionarLog('success', `Arquivo de contatos carregado: ${window.dadosContatos.length} registros`);
-                window.processarDados();
+        window.dadosContatos = dados;
+        document.getElementById('statusContatos').innerHTML = '✅ Carregado';
+        document.getElementById('statusContatos').style.color = '#28a745';
+        document.getElementById('uploadCard3').classList.add('loaded');
+
+        window.adicionarLog('success', `Arquivo de contatos carregado: ${window.dadosContatos.length} registros`);
+        window.processarDados();
+    });
+};
+
+window.processarDados = function() {
+    if (!window.dadosSetor || !window.dadosCategoria || !window.dadosContatos) return;
+
+    try {
+        window.dadosProcessados = [];
+        let setoresEncontrados = 0;
+        let setoresNaoEncontrados = [];
+
+        window.dadosContatos.forEach(contato => {
+            const nomeSetorNormalizado = contato.nome_setor?.trim().toLowerCase();
+
+            const setorData = window.dadosSetor.find(s => 
+                s.Setor?.trim().toLowerCase() === nomeSetorNormalizado ||
+                s.Setor?.trim().toLowerCase().includes(nomeSetorNormalizado) ||
+                nomeSetorNormalizado?.includes(s.Setor?.trim().toLowerCase())
+            );
+
+            if (!setorData) {
+                setoresNaoEncontrados.push(contato.nome_setor);
+                return;
+            }
+
+            setoresEncontrados++;
+
+            const classificacoesEstouradas = window.dadosCategoria.filter(c => {
+                const setorCategoria = c.Setor?.trim().toLowerCase();
+                return setorCategoria === nomeSetorNormalizado && 
+                       (window.parseNumero(c.REALIZADO) || 0) > (window.parseNumero(c["ORÇAMENTO TOTAL"]) || 0);
             });
-        };
 
-        window.processarDados = function() {
-            if (!window.dadosSetor || !window.dadosCategoria || !window.dadosContatos) {
-                return; // Aguarda todos os arquivos
-            }
+            const orcado = window.parseNumero(setorData["ORÇAMENTO TOTAL"]);
+            const realizado = window.parseNumero(setorData.REALIZADO);
 
-            try {
-                window.dadosProcessados = [];
-                let setoresEncontrados = 0;
-                let setoresNaoEncontrados = [];
-                
-                // Processa cada contato/setor
-                window.dadosContatos.forEach(contato => {
-                    // Normaliza o nome do setor para busca
-                    const nomeSetorNormalizado = contato.nome_setor?.trim().toLowerCase();
-                    
-                    // Busca dados do setor no arquivo principal (busca flexível)
-                    const setorData = window.dadosSetor.find(s => 
-                        s.Setor?.trim().toLowerCase() === nomeSetorNormalizado ||
-                        s.Setor?.trim().toLowerCase().includes(nomeSetorNormalizado) ||
-                        nomeSetorNormalizado?.includes(s.Setor?.trim().toLowerCase())
-                    );
-                    
-                    if (!setorData) {
-                        setoresNaoEncontrados.push(contato.nome_setor);
-                        return;
-                    }
+            window.dadosProcessados.push({
+                nome: contato.nome_setor,
+                telefone: contato.numero,
+                orcado: orcado,
+                realizado: realizado,
+                classificacoes: classificacoesEstouradas.map(c => ({
+                    nome: c.Classificação || 'Não informado',
+                    orcado: window.parseNumero(c["ORÇAMENTO TOTAL"]),
+                    realizado: window.parseNumero(c.REALIZADO)
+                }))
+            });
+        });
 
-                    setoresEncontrados++;
+        if (setoresNaoEncontrados.length > 0) {
+            window.adicionarLog('warning', `⚠️ ${setoresNaoEncontrados.length} setores não encontrados no orçamento: ${setoresNaoEncontrados.join(', ')}`);
+        }
 
-                    // Busca classificações estouradas para este setor
-                    const classificacoesEstouradas = window.dadosCategoria.filter(c => {
-                        const setorCategoria = c.Setor?.trim().toLowerCase();
-                        return setorCategoria === nomeSetorNormalizado && 
-                               (c.REALIZADO || 0) > (c.ORÇADO || 0);
-                    });
+        window.adicionarLog('success', `✅ ${setoresEncontrados} setores processados com sucesso`);
+        window.atualizarEstatisticas();
+        window.renderizarSetores();
+        document.getElementById('disparadorBtn').disabled = false;
+        window.adicionarLog('success', `Dados processados com sucesso! ${window.dadosProcessados.length} setores prontos para disparo.`);
 
-                    // Validação de dados numéricos
-                    const orcado = parseFloat(setorData.ORÇADO) || 0;
-                    const realizado = parseFloat(setorData.REALIZADO) || 0;
-
-                    window.dadosProcessados.push({
-                        nome: contato.nome_setor,
-                        telefone: contato.numero,
-                        orcado: orcado,
-                        realizado: realizado,
-                        classificacoes: classificacoesEstouradas.map(c => ({
-                            nome: c.Classificação || 'Não informado',
-                            orcado: parseFloat(c.ORÇADO) || 0,
-                            realizado: parseFloat(c.REALIZADO) || 0
-                        }))
-                    });
-                });
-
-                // Log de resultados do processamento
-                if (setoresNaoEncontrados.length > 0) {
-                    window.adicionarLog('warning', `⚠️ ${setoresNaoEncontrados.length} setores não encontrados no orçamento: ${setoresNaoEncontrados.join(', ')}`);
-                }
-                
-                window.adicionarLog('success', `✅ ${setoresEncontrados} setores processados com sucesso`);
-
-                window.atualizarEstatisticas();
-                window.renderizarSetores();
-                
-                // Habilita o botão de disparar
-                document.getElementById('disparadorBtn').disabled = false;
-                
-                window.adicionarLog('success', `Dados processados com sucesso! ${window.dadosProcessados.length} setores prontos para disparo.`);
-                
-            } catch (error) {
-                window.adicionarLog('error', `Erro ao processar dados: ${error.message}`);
-                console.error('Erro detalhado:', error);
-            }
-        };
+    } catch (error) {
+        window.adicionarLog('error', `Erro ao processar dados: ${error.message}`);
+        console.error('Erro detalhado:', error);
+    }
+};
 
         window.calcularPercentual = function(realizado, orcado) {
             return orcado > 0 ? (realizado / orcado) * 100 : 0;
@@ -442,26 +457,25 @@
 
 // Nova versão que envia mensagem via backend local, ocultando a chave da API
 window.enviarMensagemWhatsApp = async function(mensagem, telefone) {
-    try {
-        const response = await fetch('/api/send-message', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ number: telefone, text: mensagem })
-        });
+  try {
+    const resp = await fetch('/api/send-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number: telefone, text: mensagem })
+    });
 
-        const data = await response.json();
+    let body = null;
+    try { body = await resp.json(); } catch {}
 
-        return {
-            status: response.status,
-            success: response.ok,
-            response: data,
-        };
-    } catch (error) {
-        return {
-            success: false,
-            error: error.message
-        };
+    if (!resp.ok) {
+      const msg = body?.message || body?.provider?.message || `Falha HTTP ${resp.status}`;
+      return { success: false, status: resp.status, response: body, error: msg };
     }
+    return { success: true, status: resp.status, response: body };
+
+  } catch (e) {
+    return { success: false, error: 'Backend indisponível (porta 3000) ou bloqueado.' };
+  }
 };
 
 // Retry automático de envio em caso de falha (máximo 3 tentativas)
@@ -698,11 +712,13 @@ window.exibirQRCode = async function () {
 
 
         // Adiciona listener para mudanças nos campos da API
-        ['apiUrl', 'apiInstance', 'apiKey'].forEach(fieldId => {
-            document.getElementById(fieldId).addEventListener('change', function() {
-                const statusElement = document.getElementById('apiStatus');
-                statusElement.textContent = 'OFFLINE';
-                statusElement.className = 'api-status offline';
-            });
+        ['apiUrl','apiInstance','apiKey'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', () => {
+            const s = document.getElementById('apiStatus');
+            s.textContent = 'OFFLINE';
+            s.className = 'api-status offline';
+        });
         });
   
