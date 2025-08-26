@@ -40,16 +40,6 @@ seu-projeto/
 
 npm install
 
-2. Criar o arquivo .env
-
-Crie um arquivo .env na raiz com o seguinte conteúdo:
-
-API_URL=http://192.168.99.41:8080
-API_INSTANCE=MensageiroOrcamento
-API_KEY=T0pF4m4D3vs
-
-Obs: Esses dados são usados apenas no backend e ficam protegidos.
-
 3. Iniciar o servidor
 
 node server.js
