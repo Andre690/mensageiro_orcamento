@@ -38,7 +38,7 @@ export function renderizarSetores() {
   if (state.dadosProcessados.length === 0) {
     container.innerHTML = `
       <div class="alert alert-warning">
-        <strong>Aten\u00e7\u00e3o:</strong> Nenhum setor encontrado. Verifique se os arquivos foram carregados corretamente e se os nomes dos setores coincidem entre os arquivos.
+        <strong>Atenção:</strong> Nenhum setor encontrado. Verifique se os arquivos foram carregados corretamente e se os nomes dos setores coincidem entre os arquivos.
       </div>
     `;
     return;
@@ -81,7 +81,7 @@ export function renderizarSetores() {
       </div>
       <div class="setor-actions">
         <span>Telefone: ${setor.telefone}</span>
-        <button class="preview-pdf-btn" type="button">Preview PDF</button>
+        <button class="preview-pdf-btn" type="button">Visualizar PDF</button>
         <span>${classificacoesEstouradas} classificação(ões) estourada(s)</span>
       </div>
     `;

@@ -2,26 +2,23 @@ import { state } from './state.js';
 import { adicionarLog } from './logger.js';
 
 export function atualizarEstadoPdf() {
-  const btn = document.getElementById('togglePdfBtn');
-  if (!btn) return;
+  const checkbox = document.getElementById('togglePdfCheckbox');
+  if (!checkbox) return;
 
-  if (state.enviarPdfHabilitado) {
-    btn.classList.add('active');
-    btn.innerHTML = '<span>PDF</span> PDF Ativado';
-  } else {
-    btn.classList.remove('active');
-    btn.innerHTML = '<span>PDF</span> Enviar PDF';
-  }
+  // Sincroniza o state com o checkbox
+  state.enviarPdfHabilitado = checkbox.checked;
 }
 
 export function toggleEnvioPDF() {
-  state.enviarPdfHabilitado = !state.enviarPdfHabilitado;
-  atualizarEstadoPdf();
+  const checkbox = document.getElementById('togglePdfCheckbox');
+  if (!checkbox) return;
+
+  state.enviarPdfHabilitado = checkbox.checked;
 
   if (state.enviarPdfHabilitado) {
-    adicionarLog('info', 'Envio de PDF habilitado. O arquivo sera enviado apos a mensagem.');
+    adicionarLog('info', 'Envio de PDF habilitado. O arquivo será enviado após a mensagem.');
   } else {
-    adicionarLog('info', 'Envio de PDF desabilitado. Apenas a mensagem sera enviada.');
+    adicionarLog('info', 'Envio de PDF desabilitado. Apenas a mensagem será enviada.');
   }
 }
 

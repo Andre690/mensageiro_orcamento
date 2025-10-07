@@ -25,9 +25,9 @@ function bindEvents() {
     refreshBtn.addEventListener('click', recarregarDados);
   }
 
-  const togglePdfBtn = document.getElementById('togglePdfBtn');
-  if (togglePdfBtn) {
-    togglePdfBtn.addEventListener('click', toggleEnvioPDF);
+  const togglePdfCheckbox = document.getElementById('togglePdfCheckbox');
+  if (togglePdfCheckbox) {
+    togglePdfCheckbox.addEventListener('change', toggleEnvioPDF);
   }
 
   const disparadorBtn = document.getElementById('disparadorBtn');

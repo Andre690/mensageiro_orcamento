@@ -1,7 +1,7 @@
 const PDFDocument = require('pdfkit');
 
 /**
- * Gera um PDF de extrato orcamentario totalmente formatado.
+ * Gera um PDF de extrato orçamentário totalmente formatado com suporte a UTF-8.
  * @param {object} dadosSetor
  * @returns {Promise<Buffer>}
  */
@@ -19,7 +19,7 @@ async function gerarPDFOrcamento(dadosSetor) {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      const pageWidth = doc.page.width - 100; // margem esquerda e direita
+      const pageWidth = doc.page.width - 100;
       const colOrcado = pageWidth - 240;
       const colRealizado = pageWidth - 140;
       const colPercent = pageWidth - 40;
@@ -40,13 +40,13 @@ function renderCabecalho(doc, dados) {
   doc
     .fontSize(18)
     .font('Helvetica-Bold')
-    .text('RELATORIO ORCAMENTARIO', { align: 'center' });
+    .text('RELATÓRIO ORÇAMENTÁRIO', { align: 'center' });
 
   doc
     .moveDown(0.5)
     .fontSize(12)
     .font('Helvetica')
-    .text(`Setor: ${dados.nome || 'Nao informado'}`, { align: 'center' });
+    .text(`Setor: ${dados.nome || 'Não informado'}`, { align: 'center' });
 
   doc
     .moveDown(0.3)
@@ -77,7 +77,7 @@ function renderResumo(doc, dados, pageWidth) {
   doc
     .fontSize(9)
     .font('Helvetica')
-    .text('Orcado Total:', 60, boxY + 30)
+    .text('Orçado Total:', 60, boxY + 30)
     .text(`R$ ${formatarMoeda(dados.orcado || 0)}`, 160, boxY + 30);
 
   doc
@@ -105,8 +105,8 @@ function renderTabela(doc, dados, layout) {
     .font('Helvetica-Bold')
     .fillColor('#555555');
 
-  doc.text('Descricao', 50, headerY);
-  doc.text('Orcado', colOrcado, headerY, { width: 90, align: 'right' });
+  doc.text('Descrição', 50, headerY);
+  doc.text('Orçado', colOrcado, headerY, { width: 90, align: 'right' });
   doc.text('Realizado', colRealizado, headerY, { width: 90, align: 'right' });
   doc.text('%', colPercent, headerY, { width: 50, align: 'right' });
 
@@ -167,7 +167,7 @@ function renderTabela(doc, dados, layout) {
         .font('Helvetica-Bold')
         .fillColor('#333333')
         .text(categoria.nome || 'Categoria sem nome', 70, catY, {
-          width: colOrcado - 80
+          width: colOrcado - 100
         });
 
       const percCat =
@@ -202,11 +202,11 @@ function renderTabela(doc, dados, layout) {
           .font('Helvetica')
           .fillColor('#555555')
           .text(
-            classificacao.nome || classificacao.descricao || 'Sem classificacao',
-            90,
+            classificacao.nome || classificacao.descricao || 'Sem classificação',
+            100,
             classY,
             {
-              width: colOrcado - 100
+              width: colOrcado - 110
             }
           );
 
@@ -252,11 +252,11 @@ function renderRodape(doc) {
     doc
       .fontSize(8)
       .fillColor('#999999')
-      .text(`Pagina ${i + 1} de ${pages.count}`, 50, doc.page.height - 50, {
+      .text(`Página ${i + 1} de ${pages.count}`, 50, doc.page.height - 50, {
         align: 'center'
       });
 
-    doc.text('Sistema de Controle Orcamentario', 50, doc.page.height - 35, {
+    doc.text('Sistema de Controle Orçamentário', 50, doc.page.height - 35, {
       align: 'center'
     });
   }

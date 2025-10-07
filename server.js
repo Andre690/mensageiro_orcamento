@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const JSON_LIMIT = process.env.JSON_LIMIT || "10mb";
 
-// Garante UTF-8 nas respostas JSON e adiciona cabeçalhos de segurança
+// Garante UTF-8 em todas as respostas
 app.use((req, res, next) => {
     const originalJson = res.json.bind(res);
     res.json = (body) => {
@@ -24,7 +24,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// Middleware para JSON e arquivos estaticos
+// Middleware para JSON e arquivos estáticos
 app.use(express.json({ limit: JSON_LIMIT }));
 app.use(express.urlencoded({ extended: true, limit: JSON_LIMIT }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -65,7 +65,7 @@ async function enviarPdfParaApi(number, dadosSetor) {
         media: base64,
         number,
         fileName,
-        caption: `Extrato orcamentario - ${dadosSetor?.nome || "Setor"}`
+        caption: `Extrato orçamentário - ${dadosSetor?.nome || "Setor"}`
     };
 
     try {
@@ -94,7 +94,7 @@ app.post("/api/send-message", async (req, res) => {
     if (!number || !text) {
         return res.status(400).json({
             error: true,
-            message: "Campos 'number' e 'text' sao obrigatorios."
+            message: "Campos 'number' e 'text' são obrigatórios."
         });
     }
 
@@ -142,7 +142,6 @@ app.post("/api/send-message", async (req, res) => {
     }
 });
 
-
 // Rota para gerar preview do PDF
 app.post("/api/gerar-pdf-preview", async (req, res) => {
     const { dadosSetor } = req.body || {};
@@ -150,7 +149,7 @@ app.post("/api/gerar-pdf-preview", async (req, res) => {
     if (!dadosSetor) {
         return res.status(400).json({
             error: true,
-            message: "dadosSetor e obrigatorio para gerar o PDF."
+            message: "dadosSetor é obrigatório para gerar o PDF."
         });
     }
 
@@ -158,8 +157,8 @@ app.post("/api/gerar-pdf-preview", async (req, res) => {
         const pdfBuffer = await gerarPDFOrcamento(dadosSetor);
         const fileName = gerarNomeArquivoPDF(dadosSetor?.nome);
 
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", "inline; filename=\"" + fileName + "\"");
+        res.setHeader("Content-Type", "application/pdf; charset=utf-8");
+        res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
         res.send(pdfBuffer);
     } catch (error) {
         res.status(500).json({
@@ -169,12 +168,16 @@ app.post("/api/gerar-pdf-preview", async (req, res) => {
     }
 });
 
-// Rota para testar conexão com a API (normalizada em data.state)
+// Rota para testar conexão com a API
 app.get("/api/testar-conexao", async (req, res) => {
     try {
-        const response = await axios.get(`${process.env.API_URL}/instance/connectionState/${process.env.API_INSTANCE}`,
+        const response = await axios.get(
+            `${process.env.API_URL}/instance/connectionState/${process.env.API_INSTANCE}`,
             {
-                headers: { apikey: process.env.API_KEY, Accept: 'application/json; charset=utf-8' }
+                headers: { 
+                    apikey: process.env.API_KEY, 
+                    Accept: 'application/json; charset=utf-8' 
+                }
             }
         );
 
@@ -193,20 +196,27 @@ app.get("/api/testar-conexao", async (req, res) => {
 
         res.json({ state, raw });
     } catch (error) {
-        res.status(500).json({ error: true, message: error.message });
+        res.status(500).json({ 
+            error: true, 
+            message: error.message 
+        });
     }
 });
-// Rota para obter QR Code (agora sem :instance)
+
+// Rota para obter QR Code
 app.get("/api/qrcode", async (req, res) => {
     const instance = process.env.API_INSTANCE;
 
     try {
-        const response = await axios.get(`${process.env.API_URL}/instance/connect/${instance}`, {
-            headers: {
-                apikey: process.env.API_KEY,
-                Accept: 'application/json; charset=utf-8'
+        const response = await axios.get(
+            `${process.env.API_URL}/instance/connect/${instance}`, 
+            {
+                headers: {
+                    apikey: process.env.API_KEY,
+                    Accept: 'application/json; charset=utf-8'
+                }
             }
-        });
+        );
 
         const data = response.data;
         if (data?.base64) {
@@ -217,12 +227,14 @@ app.get("/api/qrcode", async (req, res) => {
             res.json({ message: "QR Code não disponível." });
         }
     } catch (error) {
-        res.status(500).json({ error: true, message: error.message });
+        res.status(500).json({ 
+            error: true, 
+            message: error.message 
+        });
     }
 });
 
 // Inicia o servidor
 app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}` );
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
-

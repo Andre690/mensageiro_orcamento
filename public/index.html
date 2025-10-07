@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <link rel="icon" type="image/x-icon" href="favicon.ico\">
+    <link rel="icon" type="image/x-icon" href="https://lojastopfama.com.br/sobre/topfama_icon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disparador de Mensagens - Orçamento</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
     <div class="container">
@@ -22,8 +21,8 @@
                 <h2>⚙️ Conexão com a API WhatsApp 
                     <span class="api-status offline" id="apiStatus">OFFLINE</span>
                 </h2>
-                <div class="config-grid" style="justify-content: space-between;">
-                    <button class="btn" id="testApiBtn">Testar Conexao</button>
+                <div class="config-grid">
+                    <button class="btn" id="testApiBtn">Testar Conexão</button>
                     <button class="btn success" id="connectWhatsAppBtn">Conectar WhatsApp</button>
                 </div>
 
@@ -32,7 +31,6 @@
                     <img id="qrCodeImage" src="" alt="QR Code" style="max-width: 250px; border: 5px solid #25D366; border-radius: 12px;">
                 </div>
             </div>
-
 
             <!-- Upload de Arquivos -->
             <div class="section">
@@ -110,14 +108,20 @@
             
             <!-- Controles de Envio -->
             <div class="send-controls">
-                <button class="toggle-pdf-btn" id="togglePdfBtn">
-                    <span>PDF</span>
-                    Enviar PDF
-                </button>
                 <button class="btn" id="disparadorBtn" disabled>
                     <span>📤</span>
                     Disparar Mensagens para Setores
                 </button>
+            </div>
+            
+            <div class="pdf-checkbox-wrapper">
+                <div class="pdf-checkbox-container">
+                    <input type="checkbox" id="togglePdfCheckbox" checked>
+                    <label for="togglePdfCheckbox">
+                        <span class="checkbox-icon">📄</span>
+                        Enviar PDF junto com a mensagem
+                    </label>
+                </div>
             </div>
             
             <!-- Log de Envios -->

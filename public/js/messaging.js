@@ -7,57 +7,77 @@ export function gerarMensagem(setor) {
   const percentual = calcularPercentual(setor.realizado, setor.orcado);
   const linhas = [];
 
-  linhas.push('*RELATORIO ORCAMENTARIO*');
-  linhas.push(`*Setor:* ${setor.nome}`);
-  linhas.push(
-    `*Orcado:* R$ ${setor.orcado.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2
-    })}`
-  );
-  linhas.push(
-    `*Realizado:* R$ ${setor.realizado.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2
-    })}`
-  );
-  linhas.push(`*Percentual atingido:* ${percentual.toFixed(2)}%`);
-  linhas.push('');
-
+  // Cabeçalho
+  linhas.push('📊 *RELATÓRIO ORÇAMENTÁRIO*\n');
+  
+  // Setor
+  linhas.push('🏢 *SETOR*');
+  linhas.push(`   ${setor.nome}\n`);
+  
+  // Valores
+  linhas.push('💰 *VALORES*');
+  linhas.push(`   • Orçado: R$ ${setor.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+  linhas.push(`   • Realizado: R$ ${setor.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+  linhas.push(`   • Percentual: ${percentual.toFixed(2)}%\n`);
+  
+  // Status
+  linhas.push('📊 *STATUS*');
   if (percentual >= 100) {
-    linhas.push('*ATENCAO:* setor ultrapassou o orcamento.');
+    linhas.push('   🚨 *CRÍTICO - Orçamento ultrapassado!*');
+    linhas.push('   Ação imediata necessária\n');
   } else if (percentual >= 90) {
-    linhas.push('*ALERTA:* setor proximo do limite de orcamento.');
+    linhas.push('   ⚠️ *ALERTA - Próximo do limite!*');
+    linhas.push('   Atenção necessária\n');
   } else {
-    linhas.push('Situcao controlada.');
+    linhas.push('   ✅ *CONTROLADO*');
+    linhas.push('   Situação estável\n');
   }
-
-  linhas.push('');
-  linhas.push('*Resumo por grupo:*');
+  
+  // Detalhamento por categoria
+  linhas.push('📋 *DETALHAMENTO POR CATEGORIA*\n');
 
   setor.grupos.forEach((grupo) => {
     const percGrupo = calcularPercentual(grupo.realizado, grupo.orcado);
-    linhas.push(`- ${grupo.nome}: ${percGrupo.toFixed(1)}% (R$ ${grupo.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`);
+    const iconeGrupo = percGrupo >= 100 ? '🔴' : percGrupo >= 90 ? '🟡' : '🟢';
+    
+    linhas.push(`${iconeGrupo} *${grupo.nome}*`);
+    linhas.push(`   Orçado: R$ ${grupo.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Realizado: R$ ${grupo.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percGrupo.toFixed(1)}%)`);
 
     grupo.categorias.forEach((categoria) => {
       const percCategoria = calcularPercentual(categoria.realizado, categoria.orcado);
-      linhas.push(
-        `  • ${categoria.nome}: ${percCategoria.toFixed(1)}% (R$ ${categoria.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`
+      
+      linhas.push(`   ▸ *${categoria.nome}*`);
+      linhas.push(`     Orçado: R$ ${categoria.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+      linhas.push(`     Realizado: R$ ${categoria.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+      linhas.push(`     Percentual: ${percCategoria.toFixed(1)}%`);
+      
+      // Verifica classificações estouradas nesta categoria
+      const classificacoesEstouradas = categoria.classificacoes.filter(
+        c => c.orcado > 0 && c.realizado > c.orcado
       );
+      
+      if (classificacoesEstouradas.length > 0) {
+        linhas.push('     ⚠ *Itens com orçamento estourado:*');
+        classificacoesEstouradas.forEach((classificacao) => {
+          const percClass = calcularPercentual(classificacao.realizado, classificacao.orcado);
+          linhas.push(`     • ${classificacao.nome}`);
+          linhas.push(`       Orç: R$ ${classificacao.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Real: R$ ${classificacao.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percClass.toFixed(1)}%)`);
+        });
+      }
     });
+    
+    linhas.push(''); // Linha em branco entre grupos
   });
 
+  // Atenção especial
   if (setor.classificacoes.length > 0) {
-    linhas.push('');
-    linhas.push('*Classificacoes estouradas:*');
-    setor.classificacoes.forEach((classificacao) => {
-      linhas.push(
-        `- ${classificacao.nome} (${classificacao.categoria} / ${classificacao.grupo}) - Realizado R$ ${classificacao.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-      );
-    });
+    linhas.push('🚨 *ATENÇÃO ESPECIAL*');
+    linhas.push(`   Total de ${setor.classificacoes.length} classificação(ões) com orçamento ultrapassado\n`);
   }
 
-  linhas.push('');
-  linhas.push(`Relatorio gerado em: ${new Date().toLocaleString('pt-BR')}`);
-  linhas.push('Sistema de Controle Orcamentario');
+  // Rodapé
+  linhas.push(`📅 Gerado em: ${new Date().toLocaleString('pt-BR')}`);
+  linhas.push('💼 Sistema de Controle Orçamentário');
 
   return linhas.join('\n');
 }
@@ -70,7 +90,7 @@ export async function dispararMensagens() {
 
   const apiStatus = document.getElementById('apiStatus');
   if (apiStatus && apiStatus.textContent === 'OFFLINE') {
-    adicionarLog('warning', 'Teste a conexao com a API antes de iniciar o disparo.');
+    adicionarLog('warning', 'Teste a conexão com a API antes de iniciar o disparo.');
     return;
   }
 
@@ -121,7 +141,7 @@ export async function dispararMensagens() {
               `${setor.nome} - falha no envio do PDF: ${pdfInfo.message || 'sem detalhes'}`
             );
           } else {
-            mensagemSucesso += ' (PDF sem confirmacao)';
+            mensagemSucesso += ' (PDF sem confirmação)';
           }
         }
 
@@ -155,6 +175,6 @@ export async function dispararMensagens() {
 
   if (btn) {
     btn.disabled = false;
-    btn.innerHTML = '<span>Enviar</span> Disparar Mensagens para Setores';
+    btn.innerHTML = '<span>📤</span> Disparar Mensagens para Setores';
   }
 }
