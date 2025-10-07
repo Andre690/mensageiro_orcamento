@@ -27,10 +27,20 @@ Interface responsiva e simples
 seu-projeto/
 ├── public/
 │   ├── index.html       # Interface web
-│   ├── style.css        # Estilos da página
-│   └── app.js           # Lógica JS (carregamento, processamento, envio)
+│   ├── style.css        # Estilos da pagina
+│   └── js/              # Modulos JavaScript do frontend
+│       ├── main.js      # Inicializacao e bindings de eventos
+│       ├── dataLoader.js# Importacao e processamento de planilhas
+│       ├── messaging.js # Disparo de mensagens e geracao de texto
+│       ├── api.js       # Integracao com o backend
+│       ├── ui.js        # Atualizacoes de interface
+│       ├── state.js     # Estado compartilhado do frontend
+│       └── utils.js etc # Utilitarios e funcoes de apoio
 ├── server.js            # Backend Express que envia mensagens para API
-├── .env                 # Configuração da API WhatsApp (URL, KEY, etc.)
+├── .env                 # Configuracao da API WhatsApp (URL, KEY, etc.)
+├── package.json         # Dependencias e scripts
+└── README.md
+Configuração da API WhatsApp (URL, KEY, etc.)
 ├── package.json         # Dependências e scripts
 └── README.md
 

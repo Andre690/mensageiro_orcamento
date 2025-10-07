@@ -23,8 +23,8 @@
                     <span class="api-status offline" id="apiStatus">OFFLINE</span>
                 </h2>
                 <div class="config-grid" style="justify-content: space-between;">
-                    <button class="btn" onclick="window.testarAPI()">🔍 Testar Conexão</button>
-                    <button class="btn success" onclick="window.exibirQRCode()">📱 Conectar WhatsApp</button>
+                    <button class="btn" id="testApiBtn">Testar Conexao</button>
+                    <button class="btn success" id="connectWhatsAppBtn">Conectar WhatsApp</button>
                 </div>
 
                 <div id="qrCodeContainer" style="display:none; margin-top: 15px; text-align: center;">
@@ -37,7 +37,7 @@
             <!-- Upload de Arquivos -->
             <div class="section">
                 <h2>📋 Carregar Planilhas
-                    <button class="refresh-btn" onclick="window.recarregarDados()">🔄 Atualizar</button>
+                    <button class="refresh-btn" id="refreshBtn">Atualizar</button>
                 </h2>
                 <div class="alert alert-info">
                     <strong>💡 Dica:</strong> Carregue as 3 planilhas (Excel .xlsx/.xls ou CSV) para visualizar os dados mais recentes. Os arquivos serão processados automaticamente.
@@ -47,10 +47,10 @@
                         <div class="file-icon">📊</div>
                         <strong>Orçamento Geral</strong>
                         <p style="margin: 10px 0; color: #666;">arquivodedados.xlsx</p>
-                        <div class="file-label" onclick="document.getElementById('fileSetor').click()">
-                            📤 Carregar Arquivo
-                        </div>
-                        <input type="file" id="fileSetor" class="file-input" accept=".xlsx,.xls,.csv" onchange="window.carregarArquivoSetor(event)">
+                        <label class="file-label" for="fileSetor">
+                            Carregar Arquivo
+                        </label>
+                        <input type="file" id="fileSetor" class="file-input" accept=".xlsx,.xls,.csv">
                         <div id="statusSetor">Aguardando arquivo...</div>
                     </div>
                     
@@ -58,10 +58,10 @@
                         <div class="file-icon">📋</div>
                         <strong>Orçamento Categoria</strong>
                         <p style="margin: 10px 0; color: #666;">OrcamentoCategoria.xlsx</p>
-                        <div class="file-label" onclick="document.getElementById('fileCategoria').click()">
-                            📤 Carregar Arquivo
-                        </div>
-                        <input type="file" id="fileCategoria" class="file-input" accept=".xlsx,.xls,.csv" onchange="window.carregarArquivoCategoria(event)">
+                        <label class="file-label" for="fileCategoria">
+                            Carregar Arquivo
+                        </label>
+                        <input type="file" id="fileCategoria" class="file-input" accept=".xlsx,.xls,.csv">
                         <div id="statusCategoria">Aguardando arquivo...</div>
                     </div>
                     
@@ -69,10 +69,10 @@
                         <div class="file-icon">📞</div>
                         <strong>Contatos Setores</strong>
                         <p style="margin: 10px 0; color: #666;">contato_setores.xlsx</p>
-                        <div class="file-label" onclick="document.getElementById('fileContatos').click()">
-                            📤 Carregar Arquivo
-                        </div>
-                        <input type="file" id="fileContatos" class="file-input" accept=".xlsx,.xls,.csv" onchange="window.carregarArquivoContatos(event)">
+                        <label class="file-label" for="fileContatos">
+                            Carregar Arquivo
+                        </label>
+                        <input type="file" id="fileContatos" class="file-input" accept=".xlsx,.xls,.csv">
                         <div id="statusContatos">Aguardando arquivo...</div>
                     </div>
                 </div>
@@ -108,11 +108,17 @@
                 </div>
             </div>
             
-            <!-- Botão Disparador -->
-            <button class="btn" id="disparadorBtn" onclick="window.dispararMensagens()" disabled>
-                <span>📤</span>
-                Disparar Mensagens para Setores
-            </button>
+            <!-- Controles de Envio -->
+            <div class="send-controls">
+                <button class="toggle-pdf-btn" id="togglePdfBtn">
+                    <span>PDF</span>
+                    Enviar PDF
+                </button>
+                <button class="btn" id="disparadorBtn" disabled>
+                    <span>📤</span>
+                    Disparar Mensagens para Setores
+                </button>
+            </div>
             
             <!-- Log de Envios -->
             <div class="section">
@@ -127,7 +133,7 @@
     </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="app.js"></script>
+<script type="module" src="js/main.js"></script>
 
 </body>
 </html>

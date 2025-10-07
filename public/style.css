@@ -326,6 +326,40 @@
         .status-warning { background: #ffc107; color: #333; }
         .status-success { background: #28a745; color: white; }
         
+        .setor-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .setor-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #888;
+            gap: 10px;
+        }
+
+        .preview-pdf-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+        }
+
+        .preview-pdf-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+        }
+
         .progress-bar {
             height: 8px;
             background: #e9ecef;
@@ -377,6 +411,46 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+
+        .send-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .toggle-pdf-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-pdf-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        }
+
+        .toggle-pdf-btn.active {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .toggle-pdf-btn span {
+            display: inline-block;
+            font-weight: 700;
         }
         
         .log-container {

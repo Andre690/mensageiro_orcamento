@@ -2,9 +2,11 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const axios = require("axios");
+const { gerarPDFOrcamento } = require("./services/pdf.service");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+const JSON_LIMIT = process.env.JSON_LIMIT || "10mb";
 
 // Garante UTF-8 nas respostas JSON e adiciona cabeçalhos de segurança
 app.use((req, res, next) => {
@@ -22,8 +24,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// Middleware para JSON e arquivos estáticos
-app.use(express.json());
+// Middleware para JSON e arquivos estaticos
+app.use(express.json({ limit: JSON_LIMIT }));
+app.use(express.urlencoded({ extended: true, limit: JSON_LIMIT }));
 app.use(express.static(path.join(__dirname, "public")));
 
 // Rota para servir o index.html
@@ -31,31 +34,137 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+function buildApiHeaders() {
+    return {
+        "Content-Type": "application/json; charset=utf-8",
+        Accept: "application/json; charset=utf-8",
+        apikey: process.env.API_KEY
+    };
+}
+
+function gerarNomeArquivoPDF(nomeSetor) {
+    const base = (nomeSetor || "extrato")
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "")
+        .toLowerCase();
+
+    return `${base || "extrato"}_${Date.now()}.pdf`;
+}
+
+async function enviarPdfParaApi(number, dadosSetor) {
+    const pdfBuffer = await gerarPDFOrcamento(dadosSetor);
+    const base64 = pdfBuffer.toString("base64");
+    const fileName = gerarNomeArquivoPDF(dadosSetor?.nome);
+
+    const payload = {
+        mediatype: "document",
+        media: base64,
+        number,
+        fileName,
+        caption: `Extrato orcamentario - ${dadosSetor?.nome || "Setor"}`
+    };
+
+    try {
+        const response = await axios.post(
+            `${process.env.API_URL}/message/sendMedia/${process.env.API_INSTANCE}`,
+            payload,
+            { headers: buildApiHeaders() }
+        );
+
+        return {
+            success: true,
+            status: response.status,
+            data: response.data,
+            buffer: pdfBuffer
+        };
+    } catch (error) {
+        error.pdfBuffer = pdfBuffer;
+        throw error;
+    }
+}
+
 // Rota para enviar mensagens via backend
 app.post("/api/send-message", async (req, res) => {
-    const { number, text } = req.body;
+    const { number, text, enviarPdf = true, dadosSetor } = req.body;
+
+    if (!number || !text) {
+        return res.status(400).json({
+            error: true,
+            message: "Campos 'number' e 'text' sao obrigatorios."
+        });
+    }
 
     try {
         const response = await axios.post(
             `${process.env.API_URL}/message/sendText/${process.env.API_INSTANCE}`,
-            {
-                number: number,
-                text: text
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "Accept": "application/json; charset=utf-8",
-                    "apikey": process.env.API_KEY
-                }
-            }
+            { number, text },
+            { headers: buildApiHeaders() }
         );
 
-        res.status(response.status).json(response.data);
+        let pdfResult = null;
+
+        if (enviarPdf && dadosSetor) {
+            try {
+                const envio = await enviarPdfParaApi(number, dadosSetor);
+                pdfResult = {
+                    success: true,
+                    status: envio.status,
+                    data: envio.data
+                };
+            } catch (pdfError) {
+                pdfResult = {
+                    success: false,
+                    status: pdfError.response?.status || 500,
+                    message: pdfError.response?.data?.message || pdfError.message,
+                    data: pdfError.response?.data
+                };
+            }
+        }
+
+        res.status(response.status).json({
+            success: true,
+            message: {
+                status: response.status,
+                data: response.data
+            },
+            pdf: pdfResult
+        });
     } catch (error) {
         res.status(error.response?.status || 500).json({
             error: true,
-            message: error.message || "Erro interno"
+            message: error.response?.data?.message || error.message,
+            provider: error.response?.data
+        });
+    }
+});
+
+
+// Rota para gerar preview do PDF
+app.post("/api/gerar-pdf-preview", async (req, res) => {
+    const { dadosSetor } = req.body || {};
+
+    if (!dadosSetor) {
+        return res.status(400).json({
+            error: true,
+            message: "dadosSetor e obrigatorio para gerar o PDF."
+        });
+    }
+
+    try {
+        const pdfBuffer = await gerarPDFOrcamento(dadosSetor);
+        const fileName = gerarNomeArquivoPDF(dadosSetor?.nome);
+
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", "inline; filename=\"" + fileName + "\"");
+        res.send(pdfBuffer);
+    } catch (error) {
+        res.status(500).json({
+            error: true,
+            message: error.message || "Erro ao gerar PDF"
         });
     }
 });
@@ -116,3 +225,4 @@ app.get("/api/qrcode", async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}` );
 });
+
