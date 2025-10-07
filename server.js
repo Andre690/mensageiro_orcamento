@@ -4,7 +4,23 @@ const path = require("path");
 const axios = require("axios");
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
+
+// Garante UTF-8 nas respostas JSON e adiciona cabeçalhos de segurança
+app.use((req, res, next) => {
+    const originalJson = res.json.bind(res);
+    res.json = (body) => {
+        const ct = res.get('Content-Type') || '';
+        if (!ct) {
+            res.set('Content-Type', 'application/json; charset=utf-8');
+        } else if (ct.startsWith('application/json') && !/charset=/i.test(ct)) {
+            res.set('Content-Type', ct + '; charset=utf-8');
+        }
+        return originalJson(body);
+    };
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    next();
+});
 
 // Middleware para JSON e arquivos estáticos
 app.use(express.json());
@@ -28,7 +44,8 @@ app.post("/api/send-message", async (req, res) => {
             },
             {
                 headers: {
-                    "Content-Type": "application/json",
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Accept": "application/json; charset=utf-8",
                     "apikey": process.env.API_KEY
                 }
             }
@@ -48,7 +65,7 @@ app.get("/api/testar-conexao", async (req, res) => {
     try {
         const response = await axios.get(`${process.env.API_URL}/instance/connectionState/${process.env.API_INSTANCE}`,
             {
-                headers: { apikey: process.env.API_KEY }
+                headers: { apikey: process.env.API_KEY, Accept: 'application/json; charset=utf-8' }
             }
         );
 
@@ -77,7 +94,8 @@ app.get("/api/qrcode", async (req, res) => {
     try {
         const response = await axios.get(`${process.env.API_URL}/instance/connect/${instance}`, {
             headers: {
-                apikey: process.env.API_KEY
+                apikey: process.env.API_KEY,
+                Accept: 'application/json; charset=utf-8'
             }
         });
 

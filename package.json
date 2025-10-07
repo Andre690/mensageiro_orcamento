@@ -4,11 +4,16 @@
   "description": "Sistema de disparo de mensagens por WhatsApp com controle orçamentário",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "axios": "^1.11.0",
     "dotenv": "^17.2.1",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
   }
 }
