@@ -20,13 +20,20 @@ async function gerarPDFOrcamento(dadosSetor) {
       doc.on('error', reject);
 
       const pageWidth = doc.page.width - 100;
-      const colOrcado = pageWidth - 240;
-      const colRealizado = pageWidth - 140;
-      const colPercent = pageWidth - 40;
+      const colPercent = pageWidth - 60;
+      const colDiferenca = colPercent - 90;
+      const colRealizado = colDiferenca - 90;
+      const colOrcado = colRealizado - 90;
 
       renderCabecalho(doc, dadosSetor);
       renderResumo(doc, dadosSetor, pageWidth);
-      renderTabela(doc, dadosSetor, { colOrcado, colRealizado, colPercent, pageWidth });
+      renderTabela(doc, dadosSetor, {
+        colOrcado,
+        colRealizado,
+        colDiferenca,
+        colPercent,
+        pageWidth
+      });
       renderRodape(doc);
 
       doc.end();
@@ -97,7 +104,7 @@ function renderResumo(doc, dados, pageWidth) {
 }
 
 function renderTabela(doc, dados, layout) {
-  const { colOrcado, colRealizado, colPercent, pageWidth } = layout;
+  const { colOrcado, colRealizado, colDiferenca, colPercent, pageWidth } = layout;
 
   const headerY = doc.y;
   doc
@@ -108,6 +115,7 @@ function renderTabela(doc, dados, layout) {
   doc.text('Descrição', 50, headerY);
   doc.text('Orçado', colOrcado, headerY, { width: 90, align: 'right' });
   doc.text('Realizado', colRealizado, headerY, { width: 90, align: 'right' });
+  doc.text('Diferença', colDiferenca, headerY, { width: 90, align: 'right' });
   doc.text('%', colPercent, headerY, { width: 50, align: 'right' });
 
   doc
@@ -138,7 +146,7 @@ function renderTabela(doc, dados, layout) {
       .fontSize(10)
       .font('Helvetica-Bold')
       .fillColor('#1a1a1a')
-      .text(grupo.nome || 'Grupo sem nome', 50, grupoY, { width: colOrcado - 60 });
+      .text(grupo.nome || 'Grupo sem nome', 50, grupoY, { width: colRealizado - 80 });
 
     const percGrupo =
       grupo.orcado > 0 ? ((grupo.realizado / grupo.orcado) * 100).toFixed(1) : '0.0';
@@ -151,6 +159,15 @@ function renderTabela(doc, dados, layout) {
       width: 90,
       align: 'right'
     });
+    doc.text(
+      formatarMoeda((grupo.orcado || 0) - (grupo.realizado || 0)),
+      colDiferenca,
+      grupoY,
+      {
+        width: 90,
+        align: 'right'
+      }
+    );
     doc
       .fillColor(getCorPorcentagem(percGrupo))
       .text(`${percGrupo}%`, colPercent, grupoY, { width: 50, align: 'right' });
@@ -167,7 +184,7 @@ function renderTabela(doc, dados, layout) {
         .font('Helvetica-Bold')
         .fillColor('#333333')
         .text(categoria.nome || 'Categoria sem nome', 70, catY, {
-          width: colOrcado - 100
+          width: colRealizado - 120
         });
 
       const percCat =
@@ -183,6 +200,15 @@ function renderTabela(doc, dados, layout) {
         width: 90,
         align: 'right'
       });
+      doc.text(
+        formatarMoeda((categoria.realizado || 0) - (categoria.orcado || 0)),
+        colDiferenca,
+        catY,
+        {
+          width: 90,
+          align: 'right'
+        }
+      );
       doc
         .fillColor(getCorPorcentagem(percCat))
         .text(`${percCat}%`, colPercent, catY, { width: 50, align: 'right' });
@@ -206,7 +232,7 @@ function renderTabela(doc, dados, layout) {
             100,
             classY,
             {
-              width: colOrcado - 110
+              width: colRealizado - 140
             }
           );
 
@@ -223,6 +249,15 @@ function renderTabela(doc, dados, layout) {
           width: 90,
           align: 'right'
         });
+        doc.text(
+          formatarMoeda((classificacao.realizado || 0) - (classificacao.orcado || 0)),
+          colDiferenca,
+          classY,
+          {
+            width: 90,
+            align: 'right'
+          }
+        );
         doc
           .fillColor(getCorPorcentagem(percClass))
           .text(`${percClass}%`, colPercent, classY, { width: 50, align: 'right' });
