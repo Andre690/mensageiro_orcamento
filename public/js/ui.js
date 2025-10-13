@@ -77,7 +77,7 @@ export function renderizarSetores() {
         <span>Realizado: R$ ${setor.realizado.toLocaleString('pt-BR', {
           minimumFractionDigits: 2
         })}</span>
-        <span>${percentual.toFixed(1)}%</span>
+        <span>${percentual.toFixed(2)}%</span>
       </div>
       <div class="setor-actions">
         <span>Telefone: ${setor.telefone}</span>

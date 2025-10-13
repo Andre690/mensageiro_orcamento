@@ -18,6 +18,8 @@ export function gerarMensagem(setor) {
   linhas.push('💰 *VALORES*');
   linhas.push(`   • Orçado: R$ ${setor.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
   linhas.push(`   • Realizado: R$ ${setor.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+  const diferencaSetor = (setor.orcado || 0) - (setor.realizado || 0);
+  linhas.push(`   • Diferença: R$ ${diferencaSetor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
   linhas.push(`   • Percentual: ${percentual.toFixed(2)}%\n`);
   
   // Status
@@ -41,7 +43,9 @@ export function gerarMensagem(setor) {
     const iconeGrupo = percGrupo >= 100 ? '🔴' : percGrupo >= 90 ? '🟡' : '🟢';
     
     linhas.push(`${iconeGrupo} *${grupo.nome}*`);
-    linhas.push(`   Orçado: R$ ${grupo.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Realizado: R$ ${grupo.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percGrupo.toFixed(1)}%)`);
+    linhas.push(`   Orçado: R$ ${grupo.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Realizado: R$ ${grupo.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percGrupo.toFixed(2)}%)`);
+    const diferencaGrupo = (grupo.orcado || 0) - (grupo.realizado || 0);
+    linhas.push(`   Diferença: R$ ${diferencaGrupo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
 
     grupo.categorias.forEach((categoria) => {
       const percCategoria = calcularPercentual(categoria.realizado, categoria.orcado);
@@ -49,7 +53,9 @@ export function gerarMensagem(setor) {
       linhas.push(`   ▸ *${categoria.nome}*`);
       linhas.push(`     Orçado: R$ ${categoria.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
       linhas.push(`     Realizado: R$ ${categoria.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-      linhas.push(`     Percentual: ${percCategoria.toFixed(1)}%`);
+      const diferencaCategoria = (categoria.orcado || 0) - (categoria.realizado || 0);
+      linhas.push(`     Diferença: R$ ${diferencaCategoria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+      linhas.push(`     Percentual: ${percCategoria.toFixed(2)}%`);
       
       // Verifica classificações estouradas nesta categoria
       const classificacoesEstouradas = categoria.classificacoes.filter(
@@ -61,7 +67,7 @@ export function gerarMensagem(setor) {
         classificacoesEstouradas.forEach((classificacao) => {
           const percClass = calcularPercentual(classificacao.realizado, classificacao.orcado);
           linhas.push(`     • ${classificacao.nome}`);
-          linhas.push(`       Orç: R$ ${classificacao.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Real: R$ ${classificacao.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percClass.toFixed(1)}%)`);
+          linhas.push(`       Orç: R$ ${classificacao.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Real: R$ ${classificacao.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percClass.toFixed(2)}%)`);
         });
       }
     });

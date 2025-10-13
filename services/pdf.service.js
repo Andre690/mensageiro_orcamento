@@ -142,25 +142,30 @@ function renderTabela(doc, dados, layout) {
     ensureSpace(80);
 
     const grupoY = doc.y;
+    const nomeGrupo = grupo.nome || 'Grupo sem nome';
+    const grupoNomeWidth = colOrcado - 60;
+
     doc
       .fontSize(10)
       .font('Helvetica-Bold')
       .fillColor('#1a1a1a')
-      .text(grupo.nome || 'Grupo sem nome', 50, grupoY, { width: colRealizado - 80 });
+      .text(nomeGrupo, 50, grupoY, { width: grupoNomeWidth });
+
+    const grupoNomeHeight = doc.heightOfString(nomeGrupo, { width: grupoNomeWidth });
 
     const percGrupo =
-      grupo.orcado > 0 ? ((grupo.realizado / grupo.orcado) * 100).toFixed(1) : '0.0';
+      grupo.orcado > 0 ? ((grupo.realizado / grupo.orcado) * 100).toFixed(2) : '0.00';
 
-    doc.text(formatarMoeda(grupo.orcado || 0), colOrcado, grupoY, {
+    doc.text(formatarMoedaDinamico(grupo.orcado || 0, doc), colOrcado, grupoY, {
       width: 90,
       align: 'right'
     });
-    doc.text(formatarMoeda(grupo.realizado || 0), colRealizado, grupoY, {
+    doc.text(formatarMoedaDinamico(grupo.realizado || 0, doc), colRealizado, grupoY, {
       width: 90,
       align: 'right'
     });
     doc.text(
-      formatarMoeda((grupo.orcado || 0) - (grupo.realizado || 0)),
+      formatarMoedaDinamico((grupo.orcado || 0) - (grupo.realizado || 0), doc),
       colDiferenca,
       grupoY,
       {
@@ -172,6 +177,7 @@ function renderTabela(doc, dados, layout) {
       .fillColor(getCorPorcentagem(percGrupo))
       .text(`${percGrupo}%`, colPercent, grupoY, { width: 50, align: 'right' });
 
+    doc.y = Math.max(doc.y, grupoY + grupoNomeHeight + 5);
     doc.moveDown(0.8).fillColor('#000000');
 
     const categorias = Array.isArray(grupo.categorias) ? grupo.categorias : [];
@@ -179,29 +185,35 @@ function renderTabela(doc, dados, layout) {
       ensureSpace(60);
 
       const catY = doc.y;
+      const nomeCategoria = categoria.nome || 'Categoria sem nome';
+      const categoriaNomeWidth = colOrcado - 80;
+      const categoriaHeight = doc.heightOfString(nomeCategoria, {
+        width: categoriaNomeWidth
+      });
+
       doc
         .fontSize(9)
         .font('Helvetica-Bold')
         .fillColor('#333333')
-        .text(categoria.nome || 'Categoria sem nome', 70, catY, {
-          width: colRealizado - 120
+        .text(nomeCategoria, 70, catY, {
+          width: categoriaNomeWidth
         });
 
       const percCat =
         categoria.orcado > 0
-          ? ((categoria.realizado / categoria.orcado) * 100).toFixed(1)
-          : '0.0';
+          ? ((categoria.realizado / categoria.orcado) * 100).toFixed(2)
+          : '0.00';
 
-      doc.text(formatarMoeda(categoria.orcado || 0), colOrcado, catY, {
+      doc.text(formatarMoedaDinamico(categoria.orcado || 0, doc), colOrcado, catY, {
         width: 90,
         align: 'right'
       });
-      doc.text(formatarMoeda(categoria.realizado || 0), colRealizado, catY, {
+      doc.text(formatarMoedaDinamico(categoria.realizado || 0, doc), colRealizado, catY, {
         width: 90,
         align: 'right'
       });
       doc.text(
-        formatarMoeda((categoria.realizado || 0) - (categoria.orcado || 0)),
+        formatarMoedaDinamico((categoria.orcado || 0) - (categoria.realizado || 0), doc),
         colDiferenca,
         catY,
         {
@@ -213,7 +225,8 @@ function renderTabela(doc, dados, layout) {
         .fillColor(getCorPorcentagem(percCat))
         .text(`${percCat}%`, colPercent, catY, { width: 50, align: 'right' });
 
-      doc.moveDown(0.6).fillColor('#000000');
+      doc.y = Math.max(doc.y, catY + categoriaHeight + 10);
+      doc.fillColor('#000000');
 
       const classificacoes = Array.isArray(categoria.classificacoes)
         ? categoria.classificacoes
@@ -223,34 +236,38 @@ function renderTabela(doc, dados, layout) {
         ensureSpace(45);
 
         const classY = doc.y;
+        const nomeClassificacao =
+          classificacao.nome || classificacao.descricao || 'Sem classificação';
+        const textoHeight = doc.heightOfString(nomeClassificacao, {
+          width: colOrcado - 110
+        });
+
         doc
           .fontSize(8)
           .font('Helvetica')
           .fillColor('#555555')
-          .text(
-            classificacao.nome || classificacao.descricao || 'Sem classificação',
-            100,
-            classY,
-            {
-              width: colRealizado - 140
-            }
-          );
+          .text(nomeClassificacao, 100, classY, {
+            width: colOrcado - 110
+          });
 
         const percClass =
           classificacao.orcado > 0
-            ? ((classificacao.realizado / classificacao.orcado) * 100).toFixed(1)
-            : '0.0';
+            ? ((classificacao.realizado / classificacao.orcado) * 100).toFixed(2)
+            : '0.00';
 
-        doc.text(formatarMoeda(classificacao.orcado || 0), colOrcado, classY, {
+        doc.text(formatarMoedaDinamico(classificacao.orcado || 0, doc), colOrcado, classY, {
           width: 90,
           align: 'right'
         });
-        doc.text(formatarMoeda(classificacao.realizado || 0), colRealizado, classY, {
+        doc.text(formatarMoedaDinamico(classificacao.realizado || 0, doc), colRealizado, classY, {
           width: 90,
           align: 'right'
         });
         doc.text(
-          formatarMoeda((classificacao.realizado || 0) - (classificacao.orcado || 0)),
+          formatarMoedaDinamico(
+            (classificacao.orcado || 0) - (classificacao.realizado || 0),
+            doc
+          ),
           colDiferenca,
           classY,
           {
@@ -262,7 +279,8 @@ function renderTabela(doc, dados, layout) {
           .fillColor(getCorPorcentagem(percClass))
           .text(`${percClass}%`, colPercent, classY, { width: 50, align: 'right' });
 
-        doc.moveDown(0.5).fillColor('#000000');
+        doc.y = Math.max(doc.y, classY + textoHeight + 8);
+        doc.fillColor('#000000');
       });
 
       doc.moveDown(0.3);
@@ -295,6 +313,47 @@ function renderRodape(doc) {
       align: 'center'
     });
   }
+}
+
+function formatarMoedaDinamico(valor, doc, limite = 85) {
+  const texto = formatarMoeda(valor);
+
+  if (!doc || typeof doc.widthOfString !== 'function') {
+    return texto;
+  }
+
+  if (!doc.__formatarMoedaPatched) {
+    const originalText = doc.text;
+    doc.text = function (...args) {
+      const restoreSize = this._pendingFontRestore;
+      const resultado = originalText.apply(this, args);
+      if (typeof restoreSize === 'number') {
+        this.fontSize(restoreSize);
+        this._pendingFontRestore = null;
+      }
+      return resultado;
+    };
+    doc.__formatarMoedaPatched = true;
+  }
+
+  const originalSize = doc._fontSize || 12;
+  const larguraTexto = doc.widthOfString(texto);
+
+  if (larguraTexto <= limite) {
+    doc._pendingFontRestore = null;
+    return texto;
+  }
+
+  const novoTamanho = Math.max(6, Math.floor((limite / larguraTexto) * originalSize));
+
+  if (novoTamanho >= originalSize) {
+    doc._pendingFontRestore = null;
+    return texto;
+  }
+
+  doc._pendingFontRestore = originalSize;
+  doc.fontSize(novoTamanho);
+  return texto;
 }
 
 function formatarMoeda(valor) {
