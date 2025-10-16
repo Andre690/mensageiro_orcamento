@@ -34,7 +34,7 @@ async function gerarPDFOrcamento(dadosSetor) {
         colPercent,
         pageWidth
       });
-      renderRodape(doc);
+      //renderRodape(doc);
 
       doc.end();
     } catch (err) {
@@ -100,7 +100,7 @@ function renderResumo(doc, dados, pageWidth) {
   doc
     .fillColor('#000000')
     .font('Helvetica')
-    .moveDown(5);
+    .moveDown(2.5);
 }
 
 function renderTabela(doc, dados, layout) {
@@ -138,7 +138,7 @@ function renderTabela(doc, dados, layout) {
   };
 
   const getBottomLimit = () =>
-    doc.page.height - (doc.page.margins?.bottom ?? pageMargins.bottom ?? 72);
+    doc.page.height - (doc.page.margins?.bottom ?? pageMargins.bottom ?? 72) - 50;
 
   const resetCursor = () => {
     doc.x = marginLeft;
@@ -146,13 +146,17 @@ function renderTabela(doc, dados, layout) {
   };
 
   const ensureSpace = (neededHeight) => {
-    if (doc.y + neededHeight <= getBottomLimit()) {
-      return;
+    const bottomLimit = getBottomLimit();
+    const currentY = doc.y || marginTop;
+    
+    // Só adiciona nova página se realmente não couber
+    if (currentY + neededHeight > bottomLimit) {
+      doc.addPage();
+      resetCursor();
+      drawTableHeader();
+      return true; // Indica que uma nova página foi adicionada
     }
-
-    doc.addPage();
-    resetCursor();
-    drawTableHeader();
+    return false;
   };
 
   drawTableHeader();
@@ -167,14 +171,25 @@ function renderTabela(doc, dados, layout) {
       : categoriasAgrupadas;
 
   categorias.forEach((categoria, categoriaIdx) => {
-    ensureSpace(60);
-
-    const catY = doc.y;
     const nomeCategoria = categoria.nome || 'Categoria sem nome';
     const categoriaNomeWidth = colOrcado - categoriaX - 5;
+    
+    // Calcula altura necessária ANTES de verificar espaço
     const categoriaHeight = doc.heightOfString(nomeCategoria, {
       width: categoriaNomeWidth
     });
+    
+    const classificacoes = Array.isArray(categoria.classificacoes)
+      ? categoria.classificacoes
+      : [];
+    
+    // Estima altura total necessária (categoria + pelo menos primeira classificação se houver)
+    const alturaMinimaNecessaria = categoriaHeight + 30 + 
+      (classificacoes.length > 0 ? 50 : 0);
+    
+    ensureSpace(alturaMinimaNecessaria);
+
+    const catY = doc.y;
 
     doc
       .fontSize(10)
@@ -216,19 +231,25 @@ function renderTabela(doc, dados, layout) {
     doc.y = Math.max(doc.y, catY + categoriaHeight + 10);
     doc.fillColor('#000000');
 
-    const classificacoes = Array.isArray(categoria.classificacoes)
-      ? categoria.classificacoes
-      : [];
-
     classificacoes.forEach((classificacao) => {
-      ensureSpace(45);
-
-      const classY = doc.y;
       const nomeClassificacao =
         classificacao.nome || classificacao.descricao || 'Sem classificação';
 
-      // Define largura máxima para o nome (linha invisível antes dos valores)
       const larguraMaximaNome = colOrcado - classificacaoX - 5;
+
+      // Calcula altura do texto da classificação
+      const textoHeight = doc.heightOfString(nomeClassificacao, {
+        width: larguraMaximaNome,
+        lineBreak: true,
+        continued: false,
+        wordSpacing: 0,
+        characterSpacing: 0
+      });
+
+      // Verifica espaço necessário para a classificação completa
+      ensureSpace(textoHeight + 20);
+
+      const classY = doc.y;
 
       doc
         .fontSize(8)
@@ -238,14 +259,6 @@ function renderTabela(doc, dados, layout) {
           width: larguraMaximaNome,
           lineBreak: true
         });
-
-      const textoHeight = doc.heightOfString(nomeClassificacao, {
-        width: larguraMaximaNome,
-        lineBreak: true,
-        continued: false,
-        wordSpacing: 0,
-        characterSpacing: 0
-      });
 
       const percClass =
         classificacao.orcado > 0
@@ -285,15 +298,20 @@ function renderTabela(doc, dados, layout) {
       doc.fillColor('#000000');
     });
 
-    doc.moveDown(0.3);
-
+    // Só adiciona espaçamento se não for a última categoria
     if (categoriaIdx < categorias.length - 1) {
-      doc
-        .moveTo(marginLeft, doc.y)
-        .lineTo(marginLeft + pageWidth, doc.y)
-        .strokeColor('#e0e0e0')
-        .stroke();
-      doc.moveDown(0.8);
+      doc.moveDown(0.3);
+      
+      // Verifica se há espaço para o separador, senão pula
+      const bottomLimit = getBottomLimit();
+      if (doc.y + 15 <= bottomLimit) {
+        doc
+          .moveTo(marginLeft, doc.y)
+          .lineTo(marginLeft + pageWidth, doc.y)
+          .strokeColor('#e0e0e0')
+          .stroke();
+        doc.moveDown(0.8);
+      }
     }
   });
 }
