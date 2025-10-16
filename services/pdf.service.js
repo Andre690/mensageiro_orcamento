@@ -106,190 +106,191 @@ function renderResumo(doc, dados, pageWidth) {
 function renderTabela(doc, dados, layout) {
   const { colOrcado, colRealizado, colDiferenca, colPercent, pageWidth } = layout;
 
-  const headerY = doc.y;
-  doc
-    .fontSize(9)
-    .font('Helvetica-Bold')
-    .fillColor('#555555');
+  const pageMargins =
+    doc.page.margins || { top: 72, bottom: 72, left: 72, right: 72 };
+  const marginLeft = doc.page.margins?.left ?? pageMargins.left ?? 50;
+  const marginTop = doc.page.margins?.top ?? pageMargins.top ?? 72;
 
-  doc.text('Descrição', 50, headerY);
-  doc.text('Orçado', colOrcado, headerY, { width: 90, align: 'right' });
-  doc.text('Realizado', colRealizado, headerY, { width: 90, align: 'right' });
-  doc.text('Diferença', colDiferenca, headerY, { width: 90, align: 'right' });
-  doc.text('%', colPercent, headerY, { width: 50, align: 'right' });
+  const categoriaX = marginLeft;
+  const classificacaoX = marginLeft + 30;
 
-  doc
-    .moveTo(50, headerY + 15)
-    .lineTo(50 + pageWidth, headerY + 15)
-    .strokeColor('#cccccc')
-    .stroke();
+  const drawTableHeader = () => {
+    const headerY = doc.y ?? marginTop;
 
-  doc.moveDown(1.5).fillColor('#000000');
+    doc
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .fillColor('#555555');
 
-  const grupos = Array.isArray(dados.grupos) ? dados.grupos : [];
+    doc.text('Descrição', marginLeft, headerY);
+    doc.text('Orçado', colOrcado, headerY, { width: 90, align: 'right' });
+    doc.text('Realizado', colRealizado, headerY, { width: 90, align: 'right' });
+    doc.text('Diferença', colDiferenca, headerY, { width: 90, align: 'right' });
+    doc.text('%', colPercent, headerY, { width: 50, align: 'right' });
 
-  const PAGE_MARGINS = doc.page.margins || { top: 72, bottom: 72 };
-  const bottomLimit = doc.page.height - PAGE_MARGINS.bottom;
+    doc
+      .moveTo(marginLeft, headerY + 15)
+      .lineTo(marginLeft + pageWidth, headerY + 15)
+      .strokeColor('#cccccc')
+      .stroke();
 
-  const ensureSpace = (neededHeight) => {
-    if (doc.y + neededHeight <= bottomLimit) {
-      return;
-    }
-    doc.addPage();
+    doc.moveDown(1.5).fillColor('#000000');
   };
 
-  grupos.forEach((grupo, grupoIdx) => {
-    ensureSpace(80);
+  const getBottomLimit = () =>
+    doc.page.height - (doc.page.margins?.bottom ?? pageMargins.bottom ?? 72);
 
-    const grupoY = doc.y;
-    const nomeGrupo = grupo.nome || 'Grupo sem nome';
-    const grupoNomeWidth = colOrcado - 60;
+  const resetCursor = () => {
+    doc.x = marginLeft;
+    doc.y = marginTop;
+  };
+
+  const ensureSpace = (neededHeight) => {
+    if (doc.y + neededHeight <= getBottomLimit()) {
+      return;
+    }
+
+    doc.addPage();
+    resetCursor();
+    drawTableHeader();
+  };
+
+  drawTableHeader();
+
+  const grupos = Array.isArray(dados.grupos) ? dados.grupos : [];
+  const categoriasAgrupadas = grupos.flatMap((grupo) =>
+    Array.isArray(grupo.categorias) ? grupo.categorias : []
+  );
+  const categorias =
+    categoriasAgrupadas.length === 0 && Array.isArray(dados.categorias)
+      ? dados.categorias
+      : categoriasAgrupadas;
+
+  categorias.forEach((categoria, categoriaIdx) => {
+    ensureSpace(60);
+
+    const catY = doc.y;
+    const nomeCategoria = categoria.nome || 'Categoria sem nome';
+    const categoriaNomeWidth = colOrcado - categoriaX - 5;
+    const categoriaHeight = doc.heightOfString(nomeCategoria, {
+      width: categoriaNomeWidth
+    });
 
     doc
       .fontSize(10)
       .font('Helvetica-Bold')
       .fillColor('#1a1a1a')
-      .text(nomeGrupo, 50, grupoY, { width: grupoNomeWidth });
+      .text(nomeCategoria, categoriaX, catY, {
+        width: categoriaNomeWidth,
+        continued: false,
+        wordSpacing: 0,
+        characterSpacing: 0
+      });
 
-    const grupoNomeHeight = doc.heightOfString(nomeGrupo, { width: grupoNomeWidth });
+    const percCat =
+      categoria.orcado > 0
+        ? ((categoria.realizado / categoria.orcado) * 100).toFixed(2)
+        : '0.00';
 
-    const percGrupo =
-      grupo.orcado > 0 ? ((grupo.realizado / grupo.orcado) * 100).toFixed(2) : '0.00';
-
-    doc.text(formatarMoedaDinamico(grupo.orcado || 0, doc), colOrcado, grupoY, {
+    doc.text(formatarMoedaDinamico(categoria.orcado || 0, doc), colOrcado, catY, {
       width: 90,
       align: 'right'
     });
-    doc.text(formatarMoedaDinamico(grupo.realizado || 0, doc), colRealizado, grupoY, {
+    doc.text(formatarMoedaDinamico(categoria.realizado || 0, doc), colRealizado, catY, {
       width: 90,
       align: 'right'
     });
     doc.text(
-      formatarMoedaDinamico((grupo.orcado || 0) - (grupo.realizado || 0), doc),
+      formatarMoedaDinamico((categoria.orcado || 0) - (categoria.realizado || 0), doc),
       colDiferenca,
-      grupoY,
+      catY,
       {
         width: 90,
         align: 'right'
       }
     );
     doc
-      .fillColor(getCorPorcentagem(percGrupo))
-      .text(`${percGrupo}%`, colPercent, grupoY, { width: 50, align: 'right' });
+      .fillColor(getCorPorcentagem(percCat))
+      .text(percCat + '%', colPercent, catY, { width: 50, align: 'right' });
 
-    doc.y = Math.max(doc.y, grupoY + grupoNomeHeight + 5);
-    doc.moveDown(0.8).fillColor('#000000');
+    doc.y = Math.max(doc.y, catY + categoriaHeight + 10);
+    doc.fillColor('#000000');
 
-    const categorias = Array.isArray(grupo.categorias) ? grupo.categorias : [];
-    categorias.forEach((categoria) => {
-      ensureSpace(60);
+    const classificacoes = Array.isArray(categoria.classificacoes)
+      ? categoria.classificacoes
+      : [];
 
-      const catY = doc.y;
-      const nomeCategoria = categoria.nome || 'Categoria sem nome';
-      const categoriaNomeWidth = colOrcado - 80;
-      const categoriaHeight = doc.heightOfString(nomeCategoria, {
-        width: categoriaNomeWidth
-      });
+    classificacoes.forEach((classificacao) => {
+      ensureSpace(45);
+
+      const classY = doc.y;
+      const nomeClassificacao =
+        classificacao.nome || classificacao.descricao || 'Sem classificação';
+
+      // Define largura máxima para o nome (linha invisível antes dos valores)
+      const larguraMaximaNome = colOrcado - classificacaoX - 5;
 
       doc
-        .fontSize(9)
-        .font('Helvetica-Bold')
-        .fillColor('#333333')
-        .text(nomeCategoria, 70, catY, {
-          width: categoriaNomeWidth
+        .fontSize(8)
+        .font('Helvetica')
+        .fillColor('#555555')
+        .text(nomeClassificacao, classificacaoX, classY, {
+          width: larguraMaximaNome,
+          lineBreak: true
         });
 
-      const percCat =
-        categoria.orcado > 0
-          ? ((categoria.realizado / categoria.orcado) * 100).toFixed(2)
+      const textoHeight = doc.heightOfString(nomeClassificacao, {
+        width: larguraMaximaNome,
+        lineBreak: true,
+        continued: false,
+        wordSpacing: 0,
+        characterSpacing: 0
+      });
+
+      const percClass =
+        classificacao.orcado > 0
+          ? ((classificacao.realizado / classificacao.orcado) * 100).toFixed(2)
           : '0.00';
 
-      doc.text(formatarMoedaDinamico(categoria.orcado || 0, doc), colOrcado, catY, {
-        width: 90,
-        align: 'right'
-      });
-      doc.text(formatarMoedaDinamico(categoria.realizado || 0, doc), colRealizado, catY, {
+      doc.text(formatarMoedaDinamico(classificacao.orcado || 0, doc), colOrcado, classY, {
         width: 90,
         align: 'right'
       });
       doc.text(
-        formatarMoedaDinamico((categoria.orcado || 0) - (categoria.realizado || 0), doc),
+        formatarMoedaDinamico(classificacao.realizado || 0, doc),
+        colRealizado,
+        classY,
+        {
+          width: 90,
+          align: 'right'
+        }
+      );
+      doc.text(
+        formatarMoedaDinamico(
+          (classificacao.orcado || 0) - (classificacao.realizado || 0),
+          doc
+        ),
         colDiferenca,
-        catY,
+        classY,
         {
           width: 90,
           align: 'right'
         }
       );
       doc
-        .fillColor(getCorPorcentagem(percCat))
-        .text(`${percCat}%`, colPercent, catY, { width: 50, align: 'right' });
+        .fillColor(getCorPorcentagem(percClass))
+        .text(percClass + '%', colPercent, classY, { width: 50, align: 'right' });
 
-      doc.y = Math.max(doc.y, catY + categoriaHeight + 10);
+      doc.y = Math.max(doc.y, classY + textoHeight + 8);
       doc.fillColor('#000000');
-
-      const classificacoes = Array.isArray(categoria.classificacoes)
-        ? categoria.classificacoes
-        : [];
-
-      classificacoes.forEach((classificacao) => {
-        ensureSpace(45);
-
-        const classY = doc.y;
-        const nomeClassificacao =
-          classificacao.nome || classificacao.descricao || 'Sem classificação';
-        const textoHeight = doc.heightOfString(nomeClassificacao, {
-          width: colOrcado - 110
-        });
-
-        doc
-          .fontSize(8)
-          .font('Helvetica')
-          .fillColor('#555555')
-          .text(nomeClassificacao, 100, classY, {
-            width: colOrcado - 110
-          });
-
-        const percClass =
-          classificacao.orcado > 0
-            ? ((classificacao.realizado / classificacao.orcado) * 100).toFixed(2)
-            : '0.00';
-
-        doc.text(formatarMoedaDinamico(classificacao.orcado || 0, doc), colOrcado, classY, {
-          width: 90,
-          align: 'right'
-        });
-        doc.text(formatarMoedaDinamico(classificacao.realizado || 0, doc), colRealizado, classY, {
-          width: 90,
-          align: 'right'
-        });
-        doc.text(
-          formatarMoedaDinamico(
-            (classificacao.orcado || 0) - (classificacao.realizado || 0),
-            doc
-          ),
-          colDiferenca,
-          classY,
-          {
-            width: 90,
-            align: 'right'
-          }
-        );
-        doc
-          .fillColor(getCorPorcentagem(percClass))
-          .text(`${percClass}%`, colPercent, classY, { width: 50, align: 'right' });
-
-        doc.y = Math.max(doc.y, classY + textoHeight + 8);
-        doc.fillColor('#000000');
-      });
-
-      doc.moveDown(0.3);
     });
 
-    if (grupoIdx < grupos.length - 1) {
+    doc.moveDown(0.3);
+
+    if (categoriaIdx < categorias.length - 1) {
       doc
-        .moveTo(50, doc.y)
-        .lineTo(50 + pageWidth, doc.y)
+        .moveTo(marginLeft, doc.y)
+        .lineTo(marginLeft + pageWidth, doc.y)
         .strokeColor('#e0e0e0')
         .stroke();
       doc.moveDown(0.8);

@@ -5,85 +5,64 @@ import { enviarMensagemWhatsAppComRetry } from './api.js';
 
 export function gerarMensagem(setor) {
   const percentual = calcularPercentual(setor.realizado, setor.orcado);
+  const diferencaSetor = (setor.orcado || 0) - (setor.realizado || 0);
   const linhas = [];
 
-  // Cabeçalho
-  linhas.push('📊 *RELATÓRIO ORÇAMENTÁRIO*\n');
-  
-  // Setor
-  linhas.push('🏢 *SETOR*');
-  linhas.push(`   ${setor.nome}\n`);
-  
-  // Valores
-  linhas.push('💰 *VALORES*');
-  linhas.push(`   • Orçado: R$ ${setor.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-  linhas.push(`   • Realizado: R$ ${setor.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-  const diferencaSetor = (setor.orcado || 0) - (setor.realizado || 0);
-  linhas.push(`   • Diferença: R$ ${diferencaSetor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-  linhas.push(`   • Percentual: ${percentual.toFixed(2)}%\n`);
-  
-  // Status
-  linhas.push('📊 *STATUS*');
-  if (percentual >= 100) {
-    linhas.push('   🚨 *CRÍTICO - Orçamento ultrapassado!*');
-    linhas.push('   Ação imediata necessária\n');
-  } else if (percentual >= 90) {
-    linhas.push('   ⚠️ *ALERTA - Próximo do limite!*');
-    linhas.push('   Atenção necessária\n');
-  } else {
-    linhas.push('   ✅ *CONTROLADO*');
-    linhas.push('   Situação estável\n');
-  }
-  
-  // Detalhamento por categoria
-  linhas.push('📋 *DETALHAMENTO POR CATEGORIA*\n');
+  linhas.push(
+    `Olá! Segue abaixo o relatório do setor *${setor.nome}*, com os valores orçados e realizados. O detalhamento completo está disponível no PDF em anexo.`
+  );
+  linhas.push('');
+  linhas.push('*RESUMO FINANCEIRO*');
+  linhas.push(
+    `• Valor orçado: R$ ${(setor.orcado || 0).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2
+    })}`
+  );
+  linhas.push(
+    `• Valor realizado: R$ ${(setor.realizado || 0).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2
+    })}`
+  );
+  linhas.push(
+    `• Diferença: R$ ${diferencaSetor.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2
+    })}`
+  );
+  linhas.push(`• Percentual realizado: ${percentual.toFixed(2)}%`);
 
-  setor.grupos.forEach((grupo) => {
-    const percGrupo = calcularPercentual(grupo.realizado, grupo.orcado);
-    const iconeGrupo = percGrupo >= 100 ? '🔴' : percGrupo >= 90 ? '🟡' : '🟢';
-    
-    linhas.push(`${iconeGrupo} *${grupo.nome}*`);
-    linhas.push(`   Orçado: R$ ${grupo.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Realizado: R$ ${grupo.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percGrupo.toFixed(2)}%)`);
-    const diferencaGrupo = (grupo.orcado || 0) - (grupo.realizado || 0);
-    linhas.push(`   Diferença: R$ ${diferencaGrupo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+  const status =
+    percentual >= 100
+      ? {
+          icone: '🚨',
+          titulo: '*Crítico* – orçamento ultrapassado.',
+          complemento: '> Recomendamos atenção imediata.'
+        }
+      : percentual >= 90
+      ? {
+          icone: '⚠️',
+          titulo: '*Alerta* – próximo do limite.',
+          complemento: '> Sugerimos acompanhar os próximos movimentos.'
+        }
+      : {
+          icone: '✅',
+          titulo: 'Controlado.',
+          complemento: '> Situação dentro do planejado.'
+        };
 
-    grupo.categorias.forEach((categoria) => {
-      const percCategoria = calcularPercentual(categoria.realizado, categoria.orcado);
-      
-      linhas.push(`   ▸ *${categoria.nome}*`);
-      linhas.push(`     Orçado: R$ ${categoria.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-      linhas.push(`     Realizado: R$ ${categoria.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-      const diferencaCategoria = (categoria.orcado || 0) - (categoria.realizado || 0);
-      linhas.push(`     Diferença: R$ ${diferencaCategoria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-      linhas.push(`     Percentual: ${percCategoria.toFixed(2)}%`);
-      
-      // Verifica classificações estouradas nesta categoria
-      const classificacoesEstouradas = categoria.classificacoes.filter(
-        c => c.orcado > 0 && c.realizado > c.orcado
-      );
-      
-      if (classificacoesEstouradas.length > 0) {
-        linhas.push('     ⚠ *Itens com orçamento estourado:*');
-        classificacoesEstouradas.forEach((classificacao) => {
-          const percClass = calcularPercentual(classificacao.realizado, classificacao.orcado);
-          linhas.push(`     • ${classificacao.nome}`);
-          linhas.push(`       Orç: R$ ${classificacao.orcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Real: R$ ${classificacao.realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percClass.toFixed(2)}%)`);
-        });
-      }
-    });
-    
-    linhas.push(''); // Linha em branco entre grupos
-  });
+  linhas.push('');
+  linhas.push(`${status.icone} *Situação atual:* ${status.titulo}`);
+  linhas.push(`  ${status.complemento}`);
 
-  // Atenção especial
-  if (setor.classificacoes.length > 0) {
-    linhas.push('🚨 *ATENÇÃO ESPECIAL*');
-    linhas.push(`   Total de ${setor.classificacoes.length} classificação(ões) com orçamento ultrapassado\n`);
+  if (Array.isArray(setor.classificacoes) && setor.classificacoes.length > 0) {
+    linhas.push('');
+    linhas.push(
+      `_Foram identificadas ${setor.classificacoes.length} classificação(ões) com orçamento ultrapassado._ *Detalhes no PDF.*`
+    );
   }
 
-  // Rodapé
-  linhas.push(`📅 Gerado em: ${new Date().toLocaleString('pt-BR')}`);
-  linhas.push('💼 Sistema de Controle Orçamentário');
+  linhas.push('');
+  linhas.push('Ficamos à disposição para qualquer esclarecimento adicional.');
+  linhas.push(`*Gerado em: ${new Date().toLocaleString('pt-BR')}*`);
 
   return linhas.join('\n');
 }

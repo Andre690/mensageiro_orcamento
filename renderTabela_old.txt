@@ -1,0 +1,198 @@
+﻿function renderTabela(doc, dados, layout) {
+  const { colOrcado, colRealizado, colDiferenca, colPercent, pageWidth } = layout;
+
+  const pageMargins =
+    doc.page.margins || { top: 72, bottom: 72, left: 72, right: 72 };
+  const marginLeft = doc.page.margins?.left ?? pageMargins.left ?? 50;
+  const marginTop = doc.page.margins?.top ?? pageMargins.top ?? 72;
+
+  const categoriaX = marginLeft;
+  const classificacaoX = marginLeft + 30;
+
+  const drawTableHeader = () => {
+    const headerY = doc.y ?? marginTop;
+
+    doc
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .fillColor('#555555');
+
+    doc.text('Descrição', marginLeft, headerY);
+    doc.text('Orçado', colOrcado, headerY, { width: 90, align: 'right' });
+    doc.text('Realizado', colRealizado, headerY, { width: 90, align: 'right' });
+    doc.text('Diferença', colDiferenca, headerY, { width: 90, align: 'right' });
+    doc.text('%', colPercent, headerY, { width: 50, align: 'right' });
+
+    doc
+      .moveTo(marginLeft, headerY + 15)
+      .lineTo(marginLeft + pageWidth, headerY + 15)
+      .strokeColor('#cccccc')
+      .stroke();
+
+    doc.moveDown(1.5).fillColor('#000000');
+  };
+
+  const getBottomLimit = () =>
+    doc.page.height - (doc.page.margins?.bottom ?? pageMargins.bottom ?? 72);
+
+  const resetCursor = () => {
+    doc.x = marginLeft;
+    doc.y = marginTop;
+  };
+
+  const ensureSpace = (neededHeight) => {
+    if (doc.y + neededHeight <= getBottomLimit()) {
+      return;
+    }
+
+    doc.addPage();
+    resetCursor();
+    drawTableHeader();
+  };
+
+  drawTableHeader();
+
+  const grupos = Array.isArray(dados.grupos) ? dados.grupos : [];
+  const categoriasAgrupadas = grupos.flatMap((grupo) =>
+    Array.isArray(grupo.categorias) ? grupo.categorias : []
+  );
+  const categorias =
+    categoriasAgrupadas.length === 0 && Array.isArray(dados.categorias)
+      ? dados.categorias
+      : categoriasAgrupadas;
+
+  categorias.forEach((categoria, categoriaIdx) => {
+      ensureSpace(60);
+
+      const catY = doc.y;
+      const nomeCategoria = categoria.nome || 'Categoria sem nome';
+      const categoriaNomeWidth = colOrcado - categoriaX - 5;
+      const categoriaHeight = doc.heightOfString(nomeCategoria, {
+        width: categoriaNomeWidth
+      });
+
+      doc
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .fillColor('#1a1a1a')
+        .text(nomeCategoria, categoriaX, catY, {
+          width: categoriaNomeWidth,
+          continued: false,
+          wordSpacing: 0,
+          characterSpacing: 0
+        });
+
+      const percCat =
+        categoria.orcado > 0
+          ? ((categoria.realizado / categoria.orcado) * 100).toFixed(2)
+          : '0.00';
+
+      doc.text(formatarMoedaDinamico(categoria.orcado || 0, doc), colOrcado, catY, {
+        width: 90,
+        align: 'right'
+      });
+      doc.text(formatarMoedaDinamico(categoria.realizado || 0, doc), colRealizado, catY, {
+        width: 90,
+        align: 'right'
+      });
+      doc.text(
+        formatarMoedaDinamico((categoria.orcado || 0) - (categoria.realizado || 0), doc),
+        colDiferenca,
+        catY,
+        {
+          width: 90,
+          align: 'right'
+        }
+      );
+      doc
+        .fillColor(getCorPorcentagem(percCat))
+        .text(percCat + '%', colPercent, catY, { width: 50, align: 'right' });
+
+      doc.y = Math.max(doc.y, catY + categoriaHeight + 10);
+      doc.fillColor('#000000');
+
+      const classificacoes = Array.isArray(categoria.classificacoes)
+        ? categoria.classificacoes
+        : [];
+
+      classificacoes.forEach((classificacao) => {
+        ensureSpace(45);
+
+        const classY = doc.y;
+        const nomeClassificacao =
+          classificacao.nome || classificacao.descricao || 'Sem classificação';
+
+        // Define largura máxima para o nome (linha invisível antes dos valores)
+        const larguraMaximaNome = colOrcado - classificacaoX - 5;
+
+        doc
+          .fontSize(8)
+          .font('Helvetica')
+          .fillColor('#555555')
+          .text(nomeClassificacao, classificacaoX, classY, {
+            width: larguraMaximaNome,
+            lineBreak: true
+          });
+
+        const textoHeight = doc.heightOfString(nomeClassificacao, {
+          width: larguraMaximaNome,
+          lineBreak: true,
+          continued: false,
+          wordSpacing: 0,
+          characterSpacing: 0
+        });
+
+        const percClass =
+          classificacao.orcado > 0
+            ? ((classificacao.realizado / classificacao.orcado) * 100).toFixed(2)
+            : '0.00';
+
+        doc.text(formatarMoedaDinamico(classificacao.orcado || 0, doc), colOrcado, classY, {
+          width: 90,
+          align: 'right'
+        });
+        doc.text(
+          formatarMoedaDinamico(classificacao.realizado || 0, doc),
+          colRealizado,
+          classY,
+          {
+            width: 90,
+            align: 'right'
+          }
+        );
+        doc.text(
+          formatarMoedaDinamico(
+            (classificacao.orcado || 0) - (classificacao.realizado || 0),
+            doc
+          ),
+          colDiferenca,
+          classY,
+          {
+            width: 90,
+            align: 'right'
+          }
+        );
+        doc
+          .fillColor(getCorPorcentagem(percClass))
+          .text(percClass + '%', colPercent, classY, { width: 50, align: 'right' });
+
+        doc.y = Math.max(doc.y, classY + textoHeight + 8);
+        doc.fillColor('#000000');
+      });
+
+      doc.moveDown(0.3);
+    });
+
+    if (categoriaIdx < categorias.length - 1) {
+      doc
+        .moveTo(marginLeft, doc.y)
+        .lineTo(marginLeft + pageWidth, doc.y)
+        .strokeColor('#e0e0e0')
+        .stroke();
+      doc.moveDown(0.8);
+    }
+  };
+
+
+
+
