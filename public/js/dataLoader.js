@@ -1,4 +1,4 @@
-import { state } from './state.js';
+﻿import { state } from './state.js';
 import {
   normalizarTexto,
   obterCampo,
@@ -157,11 +157,15 @@ export function processarDados() {
           ? registro.realizado
           : 0;
 
+        // Identifica o tipo de lançamento (Entrada ou Saída)
+        const tipoLancamento = registro.movimento || registro.tipo || 'Saída';
+
         categoria.classificacoes.push({
           nome: classificacaoNome,
           descricao: registro.descricao || '',
           orcado: orcadoClassificacao,
-          realizado: realizadoClassificacao
+          realizado: realizadoClassificacao,
+          tipo: tipoLancamento
         });
 
         categoria.orcado += orcadoClassificacao;
@@ -342,15 +346,21 @@ export function carregarArquivoCategoria(event) {
       const setorNome = obterCampo(linhaOriginal, 'setor', 'nome_setor');
       const grupoNome = obterCampo(linhaOriginal, 'grupo');
       const categoriaNome = obterCampo(linhaOriginal, 'categoria');
-      const classificacaoNome = obterCampo(linhaOriginal, 'classificacao');
-      const descricao = obterCampo(linhaOriginal, 'descricao');
+      const classificacaoNome = obterCampo(linhaOriginal, 'classificacao', 'classificação');
+      const descricao = obterCampo(linhaOriginal, 'descricao', 'descrição');
+      
+      // Suporta os nomes de colunas do arquivo fornecido
       const orcadoBruto = obterCampo(
         linhaOriginal,
         'orcado_mensal',
         'orcado',
-        'orcamento_total'
+        'orcamento_total',
+        'orcado mensal'
       );
       const realizadoBruto = obterCampo(linhaOriginal, 'realizado');
+      
+      // Captura o tipo de movimento (Entrada/Saída)
+      const movimento = obterCampo(linhaOriginal, 'movimento', 'tipo', 'tipo_lancamento');
 
       if (!setorNome) return;
 
@@ -362,6 +372,7 @@ export function carregarArquivoCategoria(event) {
         descricao: descricao || '',
         orcado: parseNumero(orcadoBruto),
         realizado: parseNumero(realizadoBruto),
+        movimento: movimento || 'Saída',
         original: linhaOriginal
       });
     });
@@ -369,7 +380,7 @@ export function carregarArquivoCategoria(event) {
     if (registros.length === 0) {
       adicionarLog(
         'error',
-        'Arquivo de categoria deve conter as colunas "Setor", "Grupo", "Categoria" e "Classificacao".'
+        'Arquivo de categoria deve conter as colunas "Setor", "Categoria" e "Classificacao".'
       );
       setStatus('statusCategoria', 'Formato invalido', '#dc3545');
       return;

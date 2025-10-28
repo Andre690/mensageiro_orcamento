@@ -1,4 +1,4 @@
-const PDFDocument = require('pdfkit');
+﻿const PDFDocument = require('pdfkit');
 
 /**
  * Gera um PDF de extrato orçamentário totalmente formatado com suporte a UTF-8.
@@ -26,6 +26,13 @@ async function gerarPDFOrcamento(dadosSetor) {
       const colOrcado = colRealizado - 90;
 
       renderCabecalho(doc, dadosSetor);
+      
+      // Verifica se há entradas e renderiza o resumo de receitas
+      const totaisReceitas = calcularTotaisReceitas(dadosSetor);
+      if (totaisReceitas.temEntradas) {
+        renderResumoReceitas(doc, totaisReceitas, pageWidth);
+      }
+      
       renderResumo(doc, dadosSetor, pageWidth);
       renderTabela(doc, dadosSetor, {
         colOrcado,
@@ -41,6 +48,139 @@ async function gerarPDFOrcamento(dadosSetor) {
       reject(err);
     }
   });
+}
+
+/**
+ * Calcula os totais de receitas (entradas) do setor
+ * @param {object} dados 
+ * @returns {object} { temEntradas, orcado, realizado, diferenca }
+ */
+function calcularTotaisReceitas(dados) {
+  let orcadoTotal = 0;
+  let realizadoTotal = 0;
+  let temEntradas = false;
+
+  const grupos = Array.isArray(dados.grupos) ? dados.grupos : [];
+  const categoriasAgrupadas = grupos.flatMap((grupo) =>
+    Array.isArray(grupo.categorias) ? grupo.categorias : []
+  );
+  const categorias =
+    categoriasAgrupadas.length === 0 && Array.isArray(dados.categorias)
+      ? dados.categorias
+      : categoriasAgrupadas;
+
+  categorias.forEach((categoria) => {
+    const classificacoes = Array.isArray(categoria.classificacoes)
+      ? categoria.classificacoes
+      : [];
+
+    classificacoes.forEach((classificacao) => {
+      // Verifica se é uma entrada
+      const tipo = classificacao.tipo || classificacao.movimento || '';
+      const isEntrada = tipo.toLowerCase().includes('entrada');
+      
+      if (isEntrada) {
+        temEntradas = true;
+        orcadoTotal += classificacao.orcado || 0;
+        realizadoTotal += classificacao.realizado || 0;
+      }
+    });
+  });
+
+  return {
+    temEntradas,
+    orcado: orcadoTotal,
+    realizado: realizadoTotal,
+    diferenca: realizadoTotal - orcadoTotal
+  };
+}
+
+/**
+ * Verifica se uma classificação é uma entrada (receita)
+ * @param {object} classificacao 
+ * @returns {boolean}
+ */
+function isEntrada(classificacao) {
+  const tipo = classificacao.tipo || classificacao.movimento || '';
+  return tipo.toLowerCase().includes('entrada');
+}
+
+/**
+ * Calcula a diferença baseada no tipo de lançamento
+ * Para entradas (receitas): Realizado - Orçado
+ * Para saídas (despesas): Orçado - Realizado
+ * @param {number} orcado 
+ * @param {number} realizado 
+ * @param {boolean} isReceita 
+ * @returns {number}
+ */
+function calcularDiferenca(orcado, realizado, isReceita) {
+  if (isReceita) {
+    return realizado - orcado; // Receita: quanto arrecadou a mais/menos
+  }
+  return orcado - realizado; // Despesa: quanto sobrou do orçamento
+}
+
+/**
+ * Renderiza o cabeçalho de resumo de receitas
+ * @param {PDFDocument} doc 
+ * @param {object} totais 
+ * @param {number} pageWidth 
+ */
+function renderResumoReceitas(doc, totais, pageWidth) {
+  doc
+    .fontSize(11)
+    .font('Helvetica-Bold')
+    .fillColor('#333333');
+
+  const boxY = doc.y;
+  doc
+    .roundedRect(50, boxY, pageWidth, 60, 5)
+    .fillAndStroke('#e8f5e9', '#4caf50');
+
+  doc
+    .fillColor('#000000')
+    .fontSize(10)
+    .text('RESUMO ENTRADAS', 60, boxY + 10);
+
+  // Percentual de realizado (entradas)
+  const percentualReceita =
+    totais.orcado > 0 ? ((totais.realizado / totais.orcado) * 100).toFixed(2) : '0.00';
+
+  doc
+    .fontSize(9)
+    .font('Helvetica')
+    // Primeira linha (esquerda): Receita Orçada
+    .text('Orçado Total:', 60, boxY + 30)
+    .text(`R$ ${formatarMoeda(totais.orcado)}`, 180, boxY + 30);
+
+  // Primeira linha (direita): Diferença (Realizado - Orçado), em cor condicional
+  const corDiferenca = totais.diferenca < 0 ? '#dc3545' : '#28a745';
+  const sinalDiferenca = totais.diferenca >= 0 ? '+' : '';
+  doc
+    .text('Diferença:', 300, boxY + 30)
+    .font('Helvetica-Bold')
+    .fillColor(corDiferenca)
+    .text(`${sinalDiferenca}R$ ${formatarMoeda(Math.abs(totais.diferenca))}`, 380, boxY + 30);
+
+  // Segunda linha (esquerda): Receita Realizada
+  doc
+    .fillColor('#000000')
+    .font('Helvetica')
+    .text('Realizado Total:', 60, boxY + 45)
+    .text(`R$ ${formatarMoeda(totais.realizado)}`, 180, boxY + 45);
+
+  // Segunda linha (direita): % Realizado (para entradas, >=100% deve ficar verde)
+  doc
+    .text('% Realizado:', 300, boxY + 45)
+    .font('Helvetica-Bold')
+    .fillColor(getCorPercentualPorMovimento(percentualReceita, true))
+    .text(`${percentualReceita}%`, 380, boxY + 45);
+
+  doc
+    .fillColor('#000000')
+    .font('Helvetica')
+    .moveDown(2.5);
 }
 
 function renderCabecalho(doc, dados) {
@@ -79,7 +219,7 @@ function renderResumo(doc, dados, pageWidth) {
   doc
     .fillColor('#000000')
     .fontSize(10)
-    .text('RESUMO GERAL', 60, boxY + 10);
+    .text('RESUMO SAÍDA', 60, boxY + 10);
 
   doc
     .fontSize(9)
@@ -92,10 +232,23 @@ function renderResumo(doc, dados, pageWidth) {
     .text(`R$ ${formatarMoeda(dados.realizado || 0)}`, 160, boxY + 45);
 
   doc
-    .text('% Realizado:', 300, boxY + 30)
+    .text('% Realizado:', 300, boxY + 45)
     .font('Helvetica-Bold')
     .fillColor(getCorPorcentagem(percentualSetor))
-    .text(`${percentualSetor}%`, 380, boxY + 30);
+    .text(`${percentualSetor}%`, 380, boxY + 45);
+
+  // Diferença (Saídas): Orçado - Realizado (quanto sobrou/estourou)
+  const diferencaSaida = (dados.orcado || 0) - (dados.realizado || 0);
+  const corDiferencaSaida = diferencaSaida < 0 ? '#dc3545' : '#28a745';
+  const sinalDiferencaSaida = diferencaSaida >= 0 ? '+' : '';
+
+  doc
+    .fillColor('#000000')
+    .font('Helvetica')
+    .text('Diferença:', 300, boxY + 30)
+    .font('Helvetica-Bold')
+    .fillColor(corDiferencaSaida)
+    .text(`${sinalDiferencaSaida}R$ ${formatarMoeda(Math.abs(diferencaSaida))}`, 380, boxY + 30);
 
   doc
     .fillColor('#000000')
@@ -149,12 +302,11 @@ function renderTabela(doc, dados, layout) {
     const bottomLimit = getBottomLimit();
     const currentY = doc.y || marginTop;
     
-    // Só adiciona nova página se realmente não couber
     if (currentY + neededHeight > bottomLimit) {
       doc.addPage();
       resetCursor();
       drawTableHeader();
-      return true; // Indica que uma nova página foi adicionada
+      return true;
     }
     return false;
   };
@@ -174,7 +326,6 @@ function renderTabela(doc, dados, layout) {
     const nomeCategoria = categoria.nome || 'Categoria sem nome';
     const categoriaNomeWidth = colOrcado - categoriaX - 5;
     
-    // Calcula altura necessária ANTES de verificar espaço
     const categoriaHeight = doc.heightOfString(nomeCategoria, {
       width: categoriaNomeWidth
     });
@@ -183,7 +334,6 @@ function renderTabela(doc, dados, layout) {
       ? categoria.classificacoes
       : [];
     
-    // Estima altura total necessária (categoria + pelo menos primeira classificação se houver)
     const alturaMinimaNecessaria = categoriaHeight + 30 + 
       (classificacoes.length > 0 ? 50 : 0);
     
@@ -207,6 +357,16 @@ function renderTabela(doc, dados, layout) {
         ? ((categoria.realizado / categoria.orcado) * 100).toFixed(2)
         : '0.00';
 
+    // Verifica se a categoria inteira é de receitas
+    const categoriaIsReceita = classificacoes.length > 0 && 
+      classificacoes.every(c => isEntrada(c));
+    
+    const diferencaCategoria = calcularDiferenca(
+      categoria.orcado || 0,
+      categoria.realizado || 0,
+      categoriaIsReceita
+    );
+
     doc.text(formatarMoedaDinamico(categoria.orcado || 0, doc), colOrcado, catY, {
       width: 90,
       align: 'right'
@@ -216,7 +376,7 @@ function renderTabela(doc, dados, layout) {
       align: 'right'
     });
     doc.text(
-      formatarMoedaDinamico((categoria.orcado || 0) - (categoria.realizado || 0), doc),
+      formatarMoedaDinamico(diferencaCategoria, doc),
       colDiferenca,
       catY,
       {
@@ -225,7 +385,7 @@ function renderTabela(doc, dados, layout) {
       }
     );
     doc
-      .fillColor(getCorPorcentagem(percCat))
+      .fillColor(getCorPercentualPorMovimento(percCat, categoriaIsReceita))
       .text(percCat + '%', colPercent, catY, { width: 50, align: 'right' });
 
     doc.y = Math.max(doc.y, catY + categoriaHeight + 10);
@@ -237,7 +397,6 @@ function renderTabela(doc, dados, layout) {
 
       const larguraMaximaNome = colOrcado - classificacaoX - 5;
 
-      // Calcula altura do texto da classificação
       const textoHeight = doc.heightOfString(nomeClassificacao, {
         width: larguraMaximaNome,
         lineBreak: true,
@@ -246,7 +405,6 @@ function renderTabela(doc, dados, layout) {
         characterSpacing: 0
       });
 
-      // Verifica espaço necessário para a classificação completa
       ensureSpace(textoHeight + 20);
 
       const classY = doc.y;
@@ -265,6 +423,14 @@ function renderTabela(doc, dados, layout) {
           ? ((classificacao.realizado / classificacao.orcado) * 100).toFixed(2)
           : '0.00';
 
+      // Calcula diferença baseada no tipo de lançamento
+      const classificacaoIsReceita = isEntrada(classificacao);
+      const diferencaClassificacao = calcularDiferenca(
+        classificacao.orcado || 0,
+        classificacao.realizado || 0,
+        classificacaoIsReceita
+      );
+
       doc.text(formatarMoedaDinamico(classificacao.orcado || 0, doc), colOrcado, classY, {
         width: 90,
         align: 'right'
@@ -279,10 +445,7 @@ function renderTabela(doc, dados, layout) {
         }
       );
       doc.text(
-        formatarMoedaDinamico(
-          (classificacao.orcado || 0) - (classificacao.realizado || 0),
-          doc
-        ),
+        formatarMoedaDinamico(diferencaClassificacao, doc),
         colDiferenca,
         classY,
         {
@@ -291,18 +454,16 @@ function renderTabela(doc, dados, layout) {
         }
       );
       doc
-        .fillColor(getCorPorcentagem(percClass))
+        .fillColor(getCorPercentualPorMovimento(percClass, classificacaoIsReceita))
         .text(percClass + '%', colPercent, classY, { width: 50, align: 'right' });
 
       doc.y = Math.max(doc.y, classY + textoHeight + 8);
       doc.fillColor('#000000');
     });
 
-    // Só adiciona espaçamento se não for a última categoria
     if (categoriaIdx < categorias.length - 1) {
       doc.moveDown(0.3);
       
-      // Verifica se há espaço para o separador, senão pula
       const bottomLimit = getBottomLimit();
       if (doc.y + 15 <= bottomLimit) {
         doc
@@ -388,6 +549,17 @@ function getCorPorcentagem(percentual) {
   if (percNumber >= 100) return '#dc3545';
   if (percNumber >= 90) return '#ffc107';
   return '#28a745';
+}
+
+// Para entradas, >=100% deve ser verde; caso contrário usa a regra padrão
+function getCorPercentualPorMovimento(percentual, isReceita) {
+  const percNumber = parseFloat(percentual);
+  if (Number.isNaN(percNumber)) return '#28a745';
+  if (isReceita) {
+    if (percNumber >= 100) return '#28a745';
+    return getCorPorcentagem(percNumber);
+  }
+  return getCorPorcentagem(percNumber);
 }
 
 module.exports = { gerarPDFOrcamento };

@@ -1,0 +1,30 @@
+﻿import { state } from './state.js';
+import { state } from './state.js';
+import {
+  normalizarTexto,
+  normalizarMovimento,
+  capitalizarMovimento,
+  obterCampo,
+  parseNumero,
+  formatarTelefone
+} from './utils.js';
+import { adicionarLog } from './logger.js';
+import { refreshUI } from './ui.js';
+
+function setStatus(id, texto, cor, loadedCardId) {
+  const statusEl = document.getElementById(id);
+  if (statusEl) {
+    statusEl.innerHTML = texto;
+    statusEl.style.color = cor;
+  }
+  if (loadedCardId) {
+    const card = document.getElementById(loadedCardId);
+    if (card) {
+      card.classList.add('loaded');
+    }
+  }
+}
+
+function csvParaJSON(csvText) {
+  const linhas = csvText.split('\n');
+  if (linhas.length === 0) return [];

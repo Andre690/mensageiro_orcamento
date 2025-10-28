@@ -1,4 +1,4 @@
-export function normalizarTexto(texto) {
+﻿export function normalizarTexto(texto) {
   if (!texto) return '';
   return texto
     .toString()
@@ -88,4 +88,33 @@ export function formatarTelefone(numero) {
   }
 
   return { telefone: tel, warnings };
+}
+
+
+
+// Normaliza valores de movimento para 'entrada' ou 'saida'
+export function normalizarMovimento(valor) {
+  if (!valor) return 'saida';
+  const texto = String(valor)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  if (
+    texto === 'entrada' ||
+    texto === 'receita' ||
+    texto === 'credito' ||
+    texto === 'recebimento'
+  ) {
+    return 'entrada';
+  }
+  return 'saida';
+}
+
+// Capitaliza para exibição ao usuário
+export function capitalizarMovimento(movimento) {
+  const normalizado = normalizarMovimento(movimento);
+  return normalizado === 'entrada' ? 'Entrada' : 'Saída';
 }
