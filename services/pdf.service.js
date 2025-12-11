@@ -26,14 +26,19 @@ async function gerarPDFOrcamento(dadosSetor) {
       const colOrcado = colRealizado - 90;
 
       renderCabecalho(doc, dadosSetor);
-      
-      // Verifica se há entradas e renderiza o resumo de receitas
-      const totaisReceitas = calcularTotaisReceitas(dadosSetor);
-      if (totaisReceitas.temEntradas) {
-        renderResumoReceitas(doc, totaisReceitas, pageWidth);
+
+      // Calcula totais separados por movimento
+      const { entradas, saidas } = calcularTotaisPorMovimento(dadosSetor);
+
+      // Renderiza resumo de Entradas se houver
+      if (entradas.totalOrcado > 0 || entradas.totalRealizado > 0 || entradas.temMovimento) {
+        // Pequeno ajuste para garantir que renderize se tiver movimento, mesmo que valores sejam 0 (improvável mas seguro)
+        renderResumoReceitas(doc, entradas, pageWidth);
       }
-      
-      renderResumo(doc, dadosSetor, pageWidth);
+
+      // Renderiza resumo de Saídas passamos o objeto 'saidas'
+      renderResumo(doc, saidas, pageWidth);
+
       renderTabela(doc, dadosSetor, {
         colOrcado,
         colRealizado,
@@ -51,14 +56,13 @@ async function gerarPDFOrcamento(dadosSetor) {
 }
 
 /**
- * Calcula os totais de receitas (entradas) do setor
+ * Calcula os totais separados por movimento (Entrada/Saída)
  * @param {object} dados 
- * @returns {object} { temEntradas, orcado, realizado, diferenca }
+ * @returns {object} { entradas: { orcado, realizado, diferenca }, saidas: { orcado, realizado, diferenca } }
  */
-function calcularTotaisReceitas(dados) {
-  let orcadoTotal = 0;
-  let realizadoTotal = 0;
-  let temEntradas = false;
+function calcularTotaisPorMovimento(dados) {
+  let entradas = { orcado: 0, realizado: 0, temMovimento: false };
+  let saidas = { orcado: 0, realizado: 0 };
 
   const grupos = Array.isArray(dados.grupos) ? dados.grupos : [];
   const categoriasAgrupadas = grupos.flatMap((grupo) =>
@@ -75,23 +79,31 @@ function calcularTotaisReceitas(dados) {
       : [];
 
     classificacoes.forEach((classificacao) => {
-      // Verifica se é uma entrada
-      const tipo = classificacao.tipo || classificacao.movimento || '';
-      const isEntrada = tipo.toLowerCase().includes('entrada');
-      
-      if (isEntrada) {
-        temEntradas = true;
-        orcadoTotal += classificacao.orcado || 0;
-        realizadoTotal += classificacao.realizado || 0;
+      // Verifica o movimento
+      if (isEntrada(classificacao)) {
+        entradas.orcado += classificacao.orcado || 0;
+        entradas.realizado += classificacao.realizado || 0;
+        entradas.temMovimento = true;
+      } else {
+        // Assume saída se não for entrada
+        saidas.orcado += classificacao.orcado || 0;
+        saidas.realizado += classificacao.realizado || 0;
       }
     });
   });
 
   return {
-    temEntradas,
-    orcado: orcadoTotal,
-    realizado: realizadoTotal,
-    diferenca: realizadoTotal - orcadoTotal
+    entradas: {
+      orcado: entradas.orcado,
+      realizado: entradas.realizado,
+      diferenca: entradas.realizado - entradas.orcado, // Receita: Realizado - Orçado
+      temMovimento: entradas.temMovimento
+    },
+    saidas: {
+      orcado: saidas.orcado,
+      realizado: saidas.realizado,
+      diferenca: saidas.orcado - saidas.realizado // Despesa: Orçado - Realizado
+    }
   };
 }
 
@@ -156,7 +168,11 @@ function renderResumoReceitas(doc, totais, pageWidth) {
 
   // Primeira linha (direita): Diferença (Realizado - Orçado), em cor condicional
   const corDiferenca = totais.diferenca < 0 ? '#dc3545' : '#28a745';
-  const sinalDiferenca = totais.diferenca >= 0 ? '+' : '';
+  // FIX: Force negative sign explicitly if negative, or positive if positive/zero (optional, user requested sign for negative) 
+  // Actually, formatarMoeda doesn't add sign for negative numbers if we rely on Math.abs. 
+  // Let's rely on standard logic: if it's negative, show '-', if positive show '+'.
+  const sinalDiferenca = totais.diferenca >= 0 ? '+' : '-';
+
   doc
     .text('Diferença:', 300, boxY + 30)
     .font('Helvetica-Bold')
@@ -202,9 +218,9 @@ function renderCabecalho(doc, dados) {
     .moveDown(1);
 }
 
-function renderResumo(doc, dados, pageWidth) {
+function renderResumo(doc, totais, pageWidth) {
   const percentualSetor =
-    dados.orcado > 0 ? ((dados.realizado / dados.orcado) * 100).toFixed(2) : '0.00';
+    totais.orcado > 0 ? ((totais.realizado / totais.orcado) * 100).toFixed(2) : '0.00';
 
   doc
     .fontSize(11)
@@ -225,11 +241,11 @@ function renderResumo(doc, dados, pageWidth) {
     .fontSize(9)
     .font('Helvetica')
     .text('Orçado Total:', 60, boxY + 30)
-    .text(`R$ ${formatarMoeda(dados.orcado || 0)}`, 160, boxY + 30);
+    .text(`R$ ${formatarMoeda(totais.orcado || 0)}`, 160, boxY + 30);
 
   doc
     .text('Realizado Total:', 60, boxY + 45)
-    .text(`R$ ${formatarMoeda(dados.realizado || 0)}`, 160, boxY + 45);
+    .text(`R$ ${formatarMoeda(totais.realizado || 0)}`, 160, boxY + 45);
 
   doc
     .text('% Realizado:', 300, boxY + 45)
@@ -237,10 +253,10 @@ function renderResumo(doc, dados, pageWidth) {
     .fillColor(getCorPorcentagem(percentualSetor))
     .text(`${percentualSetor}%`, 380, boxY + 45);
 
-  // Diferença (Saídas): Orçado - Realizado (quanto sobrou/estourou)
-  const diferencaSaida = (dados.orcado || 0) - (dados.realizado || 0);
+  // Diferença (Saídas): Já vem calculada no objeto totais
+  const diferencaSaida = totais.diferenca;
   const corDiferencaSaida = diferencaSaida < 0 ? '#dc3545' : '#28a745';
-  const sinalDiferencaSaida = diferencaSaida >= 0 ? '+' : '';
+  const sinalDiferencaSaida = diferencaSaida >= 0 ? '+' : ''; // FIX: explicit sign logic consistent with above
 
   doc
     .fillColor('#000000')
@@ -301,7 +317,7 @@ function renderTabela(doc, dados, layout) {
   const ensureSpace = (neededHeight) => {
     const bottomLimit = getBottomLimit();
     const currentY = doc.y || marginTop;
-    
+
     if (currentY + neededHeight > bottomLimit) {
       doc.addPage();
       resetCursor();
@@ -325,18 +341,18 @@ function renderTabela(doc, dados, layout) {
   categorias.forEach((categoria, categoriaIdx) => {
     const nomeCategoria = categoria.nome || 'Categoria sem nome';
     const categoriaNomeWidth = colOrcado - categoriaX - 5;
-    
+
     const categoriaHeight = doc.heightOfString(nomeCategoria, {
       width: categoriaNomeWidth
     });
-    
+
     const classificacoes = Array.isArray(categoria.classificacoes)
       ? categoria.classificacoes
       : [];
-    
-    const alturaMinimaNecessaria = categoriaHeight + 30 + 
+
+    const alturaMinimaNecessaria = categoriaHeight + 30 +
       (classificacoes.length > 0 ? 50 : 0);
-    
+
     ensureSpace(alturaMinimaNecessaria);
 
     const catY = doc.y;
@@ -358,9 +374,9 @@ function renderTabela(doc, dados, layout) {
         : '0.00';
 
     // Verifica se a categoria inteira é de receitas
-    const categoriaIsReceita = classificacoes.length > 0 && 
+    const categoriaIsReceita = classificacoes.length > 0 &&
       classificacoes.every(c => isEntrada(c));
-    
+
     const diferencaCategoria = calcularDiferenca(
       categoria.orcado || 0,
       categoria.realizado || 0,
@@ -375,6 +391,11 @@ function renderTabela(doc, dados, layout) {
       width: 90,
       align: 'right'
     });
+
+    // FIX: Color logic for Category Difference
+    if (diferencaCategoria < 0) {
+      doc.fillColor('#dc3545'); // red
+    }
     doc.text(
       formatarMoedaDinamico(diferencaCategoria, doc),
       colDiferenca,
@@ -384,6 +405,8 @@ function renderTabela(doc, dados, layout) {
         align: 'right'
       }
     );
+    doc.fillColor('#000000'); // Reset to black
+
     doc
       .fillColor(getCorPercentualPorMovimento(percCat, categoriaIsReceita))
       .text(percCat + '%', colPercent, catY, { width: 50, align: 'right' });
@@ -444,6 +467,11 @@ function renderTabela(doc, dados, layout) {
           align: 'right'
         }
       );
+
+      // FIX: Color logic for Classification Difference
+      if (diferencaClassificacao < 0) {
+        doc.fillColor('#dc3545'); // red
+      }
       doc.text(
         formatarMoedaDinamico(diferencaClassificacao, doc),
         colDiferenca,
@@ -453,6 +481,8 @@ function renderTabela(doc, dados, layout) {
           align: 'right'
         }
       );
+      doc.fillColor('#555555'); // Reset to default grey for classifications (or black if you prefer, but prev code seemed to rely on inheritance or explicit sets. Previous text was #555555, percentages use conditional color)
+
       doc
         .fillColor(getCorPercentualPorMovimento(percClass, classificacaoIsReceita))
         .text(percClass + '%', colPercent, classY, { width: 50, align: 'right' });
@@ -463,7 +493,7 @@ function renderTabela(doc, dados, layout) {
 
     if (categoriaIdx < categorias.length - 1) {
       doc.moveDown(0.3);
-      
+
       const bottomLimit = getBottomLimit();
       if (doc.y + 15 <= bottomLimit) {
         doc

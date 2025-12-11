@@ -1,93 +1,103 @@
-📊 Disparador de Mensagens - Sistema Orçamentário
+# Disparador de Mensagens - Orçamento
 
-Sistema web para envio de mensagens via API de WhatsApp com base em dados orçamentários de setores carregados a partir de planilhas Excel.
+Sistema de gestão e disparo de mensagens de controle orçamentário via WhatsApp. O sistema permite visualizar o status do orçamento de diversos setores, gerar extratos detalhados em PDF e enviar esses relatórios automaticamente para os gestores responsáveis.
 
-🚀 Funcionalidades
+## Funcionalidades
 
-Upload de 3 planilhas (.xlsx/.xls/.csv):
+- **Dashboard Interativo**: Visualização rápida de setores com orçamento ultrapassado, em alerta (próximos do limite) ou controlados.
+- **Processamento de Excel**: Importação e análise de planilhas de Orçamento Geral, por Categoria e Contatos.
+- **Geração de PDF**: Criação automática de extratos orçamentários detalhados (Entradas vs Saídas) usando `PDFKit`.
+- **Integração WhatsApp**: Conexão via QR Code com API de WhatsApp (Ex: Evolution API / Baileys).
+- **Envio em Massa**: Disparo automatizado de mensagens e arquivos PDF para os contatos dos setores.
+- **Log de Envios**: Monitoramento em tempo real do status dos disparos.
 
-Orçamento Geral
+## Tecnologias Utilizadas
 
-Orçamento por Categoria
+- **Backend**: Node.js, Express
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript
+- **Bibliotecas Principais**:
+    - `pdfkit`: Geração de PDFs.
+    - `xlsx`: Processamento de planilhas Excel.
+    - `axios`: Requisições HTTP.
+    - `socket.io` (se aplicável, ou polling): Comunicação com API.
 
-Contatos dos Setores
+## Pré-requisitos
 
-Geração automática de relatório de controle orçamentário
+- [Node.js](https://nodejs.org/) instalado.
+- Uma instância de API de WhatsApp (como [Evolution API](https://github.com/EvolutionAPI/evolution-api) ou similar) rodando e configurada.
 
-Disparo de mensagens personalizadas para cada setor via WhatsApp API
+## Instalação
 
-Reenvio automático em caso de falha (até 3 tentativas)
+1. Clone o repositório ou baixe os arquivos.
+2. Navegue até a pasta do projeto:
+    ```bash
+    cd mensageiro_orcamento
+    ```
+3. Instale as dependências:
+    ```bash
+    npm install
+    ```
 
-Log de sucesso e falhas
+## Configuração
 
-Interface responsiva e simples
+Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis de ambiente:
 
-📁 Estrutura do Projeto
+```env
+# Configurações do Servidor
+PORT=4000
+JSON_LIMIT=10mb
 
-seu-projeto/
-├── public/
-│   ├── index.html       # Interface web
-│   ├── style.css        # Estilos da pagina
-│   └── js/              # Modulos JavaScript do frontend
-│       ├── main.js      # Inicializacao e bindings de eventos
-│       ├── dataLoader.js# Importacao e processamento de planilhas
-│       ├── messaging.js # Disparo de mensagens e geracao de texto
-│       ├── api.js       # Integracao com o backend
-│       ├── ui.js        # Atualizacoes de interface
-│       ├── state.js     # Estado compartilhado do frontend
-│       └── utils.js etc # Utilitarios e funcoes de apoio
-├── server.js            # Backend Express que envia mensagens para API
-├── .env                 # Configuracao da API WhatsApp (URL, KEY, etc.)
-├── package.json         # Dependencias e scripts
-└── README.md
-Configuração da API WhatsApp (URL, KEY, etc.)
-├── package.json         # Dependências e scripts
-└── README.md
+# Configurações da API WhatsApp
+API_URL=http://seu-endereco-api:8080
+API_KEY=sua-api-key-aqui
+API_INSTANCE=NomeDaSuaInstancia
+```
 
-⚙️ Configuração Inicial
+> **Nota**: `API_INSTANCE` deve corresponder ao nome da instância criada na sua API de gerenciamento de WhatsApp.
 
-1. Instalar dependências:
+## Como Usar
 
-npm install
+1. **Inicie o servidor**:
+    ```bash
+    npm run dev
+    # ou
+    npm start
+    ```
+2. **Acesse a interface**:
+    Abra o navegador em `http://localhost:4000` (ou a porta definida no `.env`).
 
-3. Iniciar o servidor
+3. **Conecte o WhatsApp**:
+    - Clique em "Conectar WhatsApp" e escaneie o QR Code se necessário.
+    - Aguarde o status mudar para "Conectado".
 
-node server.js
+4. **Carregue as Planilhas**:
+    O sistema espera 3 arquivos específicos (Excel ou CSV):
+    - **Orçamento Geral**: Dados gerais de orçado x realizado por setor.
+    - **Orçamento Categoria**: Detalhamento por categoria/classificação.
+    - **Contatos Setores**: Mapeamento de Setor -> Número de WhatsApp.
 
-Ou com nodemon (se instalado):
+5. **Disparar Mensagens**:
+    - Verifique as estatísticas no dashboard.
+    - Clique em "Disparar Mensagens para Setores".
+    - Opcionalmente, desmarque "Enviar PDF" se quiser enviar apenas texto.
 
-npx nodemon server.js
+## Estrutura do Projeto
 
-Acesse em:
+```
+mensageiro_orcamento/
+├── public/             # Arquivos do Frontend (HTML, CSS, JS)
+│   ├── js/             # Lógica do cliente
+│   └── style.css       # Estilos
+├── services/           # Lógica de negócios
+│   └── pdf.service.js  # Gerador de PDF
+├── server.js           # Ponto de entrada do Backend
+├── app.js              # Configuração Express (Modular - uso secundário)
+└── .env                # Variáveis de ambiente
+```
 
-http://localhost:3000
+## Formato das Planilhas
 
-📤 Como Usar
+Para que o sistema funcione corretamente, as planilhas devem seguir padrões específicos de colunas esperados pelo processador de dados (verifique `public/js/dataLoader.js` para detalhes das colunas obrigatórias como "Setor", "Realizado", "Orçado", etc).
 
-Abra a página principal no navegador
-
-Carregue os 3 arquivos Excel correspondentes
-
-Visualize os setores, status orçamentário e estatísticas
-
-Clique em “Disparar Mensagens”
-
-O sistema processa, envia via API e exibe o log
-
-🛠 Tecnologias Usadas
-
-Front-end: HTML, CSS, JavaScript puro, XLSX.js
-
-Back-end: Node.js + Express + dotenv + axios
-
-✅ Observações Importantes
-
-A API do WhatsApp precisa estar rodando e acessível pela rede
-
-Os arquivos Excel devem ter estrutura compatível com o sistema
-
-Os campos de configuração da API foram retirados do front e são definidos via .env
-
-📄 Licença
-
-Projeto desenvolvido para uso interno. Caso queira customizar ou reutilizar, adapte conforme necessidade.
+---
+Desenvolvido para automatizar o controle orçamentário.
