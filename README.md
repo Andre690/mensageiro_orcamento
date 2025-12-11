@@ -101,3 +101,15 @@ Para que o sistema funcione corretamente, as planilhas devem seguir padrões esp
 
 ---
 Desenvolvido para automatizar o controle orçamentário.
+
+## Docker
+
+To run the application using Docker:
+
+1.  Make sure you have Docker and Docker Compose installed.
+2.  Create/Update your `.env` file (see above).
+3.  Run the command:
+    ```bash
+    docker-compose up --build -d
+    ```
+4.  The application will be available at `http://localhost:4000`.

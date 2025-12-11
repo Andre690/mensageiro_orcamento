@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: mensageiro-orcamento-api
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+    env_file:
+      - .env
+    volumes:
+      # Mount .env to ensure the container has access to latest changes if env_file is not enough (it usually is, but re-reading file is safer for hot-reload scenarios if setup differently)
+      # Mount public folder if you want to see standard static file changes without rebuild
+      #- ./public:/app/public
+      - ./public:/app/public
+    restart: unless-stopped
