@@ -1,0 +1,16 @@
+Mapeamento de Setores
+
+Não foi encontrada uma lista fixa de setores hardcoded na codebase.
+O sistema realiza o mapeamento dos setores de forma dinâmica na interface (frontend), processando os arquivos Excel ou CSV carregados pelo usuário.
+
+Lógica de Mapeamento (encontrada em public/js/dataLoader.js):
+1. O sistema lê o arquivo de "Orçamento Geral" e identifica cada setor pela coluna "setor" ou "nome_setor".
+2. O sistema lê o arquivo de "Contatos" e vincula telefones aos setores comparando o nome (normalizado) da coluna "nome_setor" ou "setor".
+3. O sistema lê o arquivo de "Categorias" e agrupa os detalhes financeiros vinculando também pelo nome do setor.
+
+Portanto, os "todos os setores" dependem inteiramente dos arquivos que são carregados no momento do uso da aplicação.
+
+Arquivos esperados pelo sistema para realizar esse mapeamento:
+- Orçamento Geral (.xlsx/.csv)
+- Orçamento Categoria (.xlsx/.csv)
+- Contatos Setores (.xlsx/.csv)
