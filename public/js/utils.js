@@ -1,4 +1,4 @@
-﻿export function normalizarTexto(texto) {
+export function normalizarTexto(texto) {
   if (!texto) return '';
   return texto
     .toString()
@@ -118,3 +118,52 @@ export function capitalizarMovimento(movimento) {
   const normalizado = normalizarMovimento(movimento);
   return normalizado === 'entrada' ? 'Entrada' : 'Saída';
 }
+
+/**
+ * Extrai os valores de Faturamento Líquido consolidado de todos os setores em dadosProcessados.
+ * Busca em todos os setores a categoria "01.02 - FATURAMENTO BRUTO" e dentro dela
+ * a classificação "02 - FATURAMENTO LIQUIDO", somando os valores de todos os setores onde existir.
+ *
+ * @param {Array} dadosProcessados - state.dadosProcessados completo
+ * @returns {{ orcado: number, realizado: number } | null}
+ */
+export function extrairFaturamentoLiquidoExterno(dadosProcessados) {
+  if (!Array.isArray(dadosProcessados)) return null;
+
+  function normComp(texto) {
+    return (texto || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  let totalOrcado = 0;
+  let totalRealizado = 0;
+  let encontrou = false;
+
+  dadosProcessados.forEach((setor) => {
+    const grupos = Array.isArray(setor.grupos) ? setor.grupos : [];
+    const todasCats = grupos.flatMap((g) => Array.isArray(g.categorias) ? g.categorias : []);
+    const cats = todasCats.length === 0 && Array.isArray(setor.categorias)
+      ? setor.categorias
+      : todasCats;
+
+    cats.forEach((cat) => {
+      const nCat = normComp(cat.nome);
+      if (nCat.includes('01.02') && nCat.includes('faturamento bruto')) {
+        (cat.classificacoes || []).forEach((cls) => {
+          const nCls = normComp(cls.nome);
+          if (nCls.includes('02') && nCls.includes('faturamento liquido')) {
+            totalOrcado    += cls.orcado    || 0;
+            totalRealizado += cls.realizado || 0;
+            encontrou = true;
+          }
+        });
+      }
+    });
+  });
+
+  return encontrou ? { orcado: totalOrcado, realizado: totalRealizado } : null;
+}
+

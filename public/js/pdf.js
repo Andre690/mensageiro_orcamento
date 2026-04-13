@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { adicionarLog } from './logger.js';
+import { extrairFaturamentoLiquidoExterno } from './utils.js';
 
 export function atualizarEstadoPdf() {
   const checkbox = document.getElementById('togglePdfCheckbox');
@@ -31,13 +32,19 @@ export async function visualizarPDF(setor) {
   try {
     adicionarLog('info', `Gerando preview do PDF para ${setor.nome}...`);
 
+    // Injeta Faturamento Líquido externo (ex: do COMERCIAL) para cálculo do % CMV
+    const fatLiq = extrairFaturamentoLiquidoExterno(state.dadosProcessados);
+    const setorEnvio = fatLiq
+      ? { ...setor, faturamentoLiquidoExterno: fatLiq }
+      : setor;
+
     const response = await fetch('/api/gerar-pdf-preview', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         Accept: 'application/json; charset=utf-8'
       },
-      body: JSON.stringify({ dadosSetor: setor })
+      body: JSON.stringify({ dadosSetor: setorEnvio })
     });
 
     if (!response.ok) {

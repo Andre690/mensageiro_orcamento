@@ -1,3 +1,33 @@
-disparador-orcamento-api\node_modules
+# ─── Dependências ────────────────────────────────────────────────
 node_modules/
+disparador-orcamento-api/node_modules
+
+# ─── Variáveis de ambiente ───────────────────────────────────────
 .env
+.env.*
+!.env.example
+
+# ─── Pasta de testes e dados temporários ─────────────────────────
+utils/
+
+# ─── PDFs gerados em qualquer lugar ─────────────────────────────
+*.pdf
+
+# ─── Arquivos legados / temporários na raiz ──────────────────────
+renderTabela_old.txt
+tmp_view.txt
+
+# ─── Logs ────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+
+# ─── Sistema operacional ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDEs ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

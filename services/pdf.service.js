@@ -1,4 +1,4 @@
-﻿const PDFDocument = require('pdfkit');
+const PDFDocument = require('pdfkit');
 
 /**
  * Gera um PDF de extrato orçamentário totalmente formatado com suporte a UTF-8.
@@ -338,6 +338,31 @@ function renderTabela(doc, dados, layout) {
       ? dados.categorias
       : categoriasAgrupadas;
 
+  // Faturamento Líquido: primeiro verifica se foi passado externamente (ex: do setor COMERCIAL),
+  // e como fallback busca nos dados internos do próprio setor.
+  let faturamentoLiquidoRealizado = dados.faturamentoLiquidoExterno?.realizado ?? null;
+  let faturamentoLiquidoOrcado    = dados.faturamentoLiquidoExterno?.orcado    ?? null;
+
+  if (faturamentoLiquidoOrcado === null && faturamentoLiquidoRealizado === null) {
+    categorias.forEach((cat) => {
+      if (
+        normalizarParaComparacao(cat.nome).includes('01.02') &&
+        normalizarParaComparacao(cat.nome).includes('faturamento bruto')
+      ) {
+        (cat.classificacoes || []).forEach((cls) => {
+          if (
+            normalizarParaComparacao(cls.nome).includes('02') &&
+            normalizarParaComparacao(cls.nome).includes('faturamento liquido')
+          ) {
+            faturamentoLiquidoRealizado = cls.realizado;
+            faturamentoLiquidoOrcado = cls.orcado;
+          }
+        });
+      }
+    });
+  }
+
+
   categorias.forEach((categoria, categoriaIdx) => {
     const nomeCategoria = categoria.nome || 'Categoria sem nome';
     const categoriaNomeWidth = colOrcado - categoriaX - 5;
@@ -383,14 +408,24 @@ function renderTabela(doc, dados, layout) {
       categoriaIsReceita
     );
 
-    doc.text(formatarMoedaDinamico(categoria.orcado || 0, doc), colOrcado, catY, {
-      width: 90,
-      align: 'right'
-    });
-    doc.text(formatarMoedaDinamico(categoria.realizado || 0, doc), colRealizado, catY, {
-      width: 90,
-      align: 'right'
-    });
+    let textoOrcadoCat = formatarMoedaDinamico(categoria.orcado || 0, doc);
+    let textoRealizadoCat = formatarMoedaDinamico(categoria.realizado || 0, doc);
+
+    if (isCMVCategoria(nomeCategoria)) {
+      if (faturamentoLiquidoOrcado > 0) {
+        const percOrc = (((categoria.orcado || 0) / faturamentoLiquidoOrcado) * 100)
+          .toFixed(2).replace('.', ',');
+        textoOrcadoCat += ` (${percOrc}%)`;
+      }
+      if (faturamentoLiquidoRealizado > 0) {
+        const percReal = (((categoria.realizado || 0) / faturamentoLiquidoRealizado) * 100)
+          .toFixed(2).replace('.', ',');
+        textoRealizadoCat += ` (${percReal}%)`;
+      }
+    }
+
+    doc.text(textoOrcadoCat, colOrcado, catY, { width: 90, align: 'right' });
+    doc.text(textoRealizadoCat, colRealizado, catY, { width: 90, align: 'right' });
 
     // FIX: Color logic for Category Difference
     if (diferencaCategoria < 0) {
@@ -454,19 +489,24 @@ function renderTabela(doc, dados, layout) {
         classificacaoIsReceita
       );
 
-      doc.text(formatarMoedaDinamico(classificacao.orcado || 0, doc), colOrcado, classY, {
-        width: 90,
-        align: 'right'
-      });
-      doc.text(
-        formatarMoedaDinamico(classificacao.realizado || 0, doc),
-        colRealizado,
-        classY,
-        {
-          width: 90,
-          align: 'right'
+      let textoOrcadoCls = formatarMoedaDinamico(classificacao.orcado || 0, doc);
+      let textoRealizadoCls = formatarMoedaDinamico(classificacao.realizado || 0, doc);
+
+      if (isCMVClassificacao(nomeClassificacao) && isCMVCategoria(nomeCategoria)) {
+        if (faturamentoLiquidoOrcado > 0) {
+          const percOrc = (((classificacao.orcado || 0) / faturamentoLiquidoOrcado) * 100)
+            .toFixed(2).replace('.', ',');
+          textoOrcadoCls += ` (${percOrc}%)`;
         }
-      );
+        if (faturamentoLiquidoRealizado > 0) {
+          const percReal = (((classificacao.realizado || 0) / faturamentoLiquidoRealizado) * 100)
+            .toFixed(2).replace('.', ',');
+          textoRealizadoCls += ` (${percReal}%)`;
+        }
+      }
+
+      doc.text(textoOrcadoCls, colOrcado, classY, { width: 90, align: 'right' });
+      doc.text(textoRealizadoCls, colRealizado, classY, { width: 90, align: 'right' });
 
       // FIX: Color logic for Classification Difference
       if (diferencaClassificacao < 0) {
@@ -523,6 +563,33 @@ function renderRodape(doc) {
       align: 'center'
     });
   }
+}
+
+/**
+ * Normaliza texto removendo acentos e convertendo para minúsculas.
+ * Usada para comparação tolerante de nomes de categoria/classificação.
+ */
+function normalizarParaComparacao(texto) {
+  return (texto || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Verifica se o nome da categoria é a de CMV (02.03 - CUSTO DAS MERCADORIAS VENDIDAS).
+ */
+function isCMVCategoria(nome) {
+  const n = normalizarParaComparacao(nome);
+  return n.includes('02.03') && n.includes('custo das mercadorias vendidas');
+}
+
+/**
+ * Verifica se o nome da classificação é de CMV.
+ */
+function isCMVClassificacao(nome) {
+  return normalizarParaComparacao(nome).includes('custo das mercadorias vendidas');
 }
 
 function formatarMoedaDinamico(valor, doc, limite = 85) {

@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { adicionarLog } from './logger.js';
+import { extrairFaturamentoLiquidoExterno } from './utils.js';
 
 function getApiHeaders() {
   return {
@@ -78,7 +79,11 @@ export async function enviarMensagemWhatsApp(mensagem, telefone, dadosSetor = nu
 
     if (state.enviarPdfHabilitado && dadosSetor) {
       payload.enviarPdf = true;
-      payload.dadosSetor = dadosSetor;
+      // Injeta Faturamento Líquido externo para cálculo do % CMV no PDF
+      const fatLiq = extrairFaturamentoLiquidoExterno(state.dadosProcessados);
+      payload.dadosSetor = fatLiq
+        ? { ...dadosSetor, faturamentoLiquidoExterno: fatLiq }
+        : dadosSetor;
     }
 
     const resp = await fetch('/api/send-message', {

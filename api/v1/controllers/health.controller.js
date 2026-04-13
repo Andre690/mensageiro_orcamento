@@ -1,4 +1,4 @@
-const { asyncHandler } = require('../../../utils/asyncHandler');
+const { asyncHandler } = require('../../../helpers/asyncHandler');
 const { getHealthInfo } = require('../../../services/health.service');
 
 exports.getHealth = asyncHandler(async (req, res) => {
