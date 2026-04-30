@@ -56,22 +56,12 @@
                     <div class="upload-card" id="uploadCard3">
                         <div class="file-icon">📞</div>
                         <strong>Contatos Setores</strong>
-                        <p style="margin: 10px 0; color: #666;">contato_setores.xlsx (opcional)</p>
+                        <p style="margin: 10px 0; color: #666;">contato_setores.xlsx</p>
                         <label class="file-label" for="fileContatos">
                             Carregar Arquivo
                         </label>
                         <input type="file" id="fileContatos" class="file-input" accept=".xlsx,.xls,.csv">
                         <div id="statusContatos">Aguardando arquivo...</div>
-                    </div>
-
-                    <div class="upload-card upload-card-action" id="uploadCard4">
-                        <div class="file-icon">✏️</div>
-                        <strong>Gerenciar Contatos</strong>
-                        <p style="margin: 10px 0; color: #666;">Editar e salvar números dos setores</p>
-                        <button class="file-label btn-gerenciar" id="btnGerenciarContatos">
-                            Abrir Gerenciador
-                        </button>
-                        <div id="statusContatosDb">Contatos salvos no banco local</div>
                     </div>
                 </div>
             </div>
@@ -135,26 +125,6 @@
             </div>
         </div>
     </div>
-
-<!-- Modal de Gerenciamento de Contatos -->
-<div class="modal-overlay" id="modalContatos" role="dialog" aria-modal="true" aria-labelledby="modalContatosTitulo">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h2 id="modalContatosTitulo">📞 Gerenciar Contatos dos Setores</h2>
-            <button class="modal-close" id="btnFecharModalContatos" aria-label="Fechar modal">✕</button>
-        </div>
-        <p class="modal-subtitle">Preencha ou edite os números. Os contatos salvos serão usados automaticamente nos próximos disparos.</p>
-        <div class="modal-body">
-            <div id="listaContatosModal" class="lista-contatos-modal">
-                <!-- Preenchido dinamicamente por contatos.js -->
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-modal-cancelar" id="btnCancelarModalContatos" onclick="document.getElementById('modalContatos').classList.remove('active'); document.body.style.overflow='';">Cancelar</button>
-            <button class="btn btn-modal-salvar" id="btnSalvarContatos">💾 Salvar Contatos</button>
-        </div>
-    </div>
-</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module" src="js/main.js"></script>

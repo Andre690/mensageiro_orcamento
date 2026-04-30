@@ -7,7 +7,6 @@ import {
 } from './utils.js';
 import { adicionarLog } from './logger.js';
 import { refreshUI } from './ui.js';
-import { buscarContatosSalvos, abrirModalContatos } from './contatos.js';
 
 function setStatus(id, texto, cor, loadedCardId) {
   const statusEl = document.getElementById(id);
@@ -89,38 +88,9 @@ function processarArquivo(file, callback) {
   }
 }
 
-/**
- * Extrai nomes únicos de setores da planilha de categorias carregada.
- * @returns {string[]}
- */
-export function extrairSetoresUnicos() {
-  if (!state.dadosCategoria) return [];
-  const setores = new Set();
-  state.dadosCategoria.forEach((r) => {
-    if (r.setor) setores.add(r.setor);
-  });
-  return Array.from(setores).sort();
-}
-
-export async function processarDados() {
-  // Aceita contatos do arquivo OU do banco SQLite
-  let fonteContatos = state.dadosContatos;
-
-  if (!state.dadosCategoria) return;
-
-  if (!fonteContatos) {
-    // Tenta buscar contatos salvos no banco
-    const mapaDb = await buscarContatosSalvos();
-    if (mapaDb.size === 0) {
-      adicionarLog('warning', 'Nenhum arquivo de contatos e nenhum contato salvo no banco. Carregue os contatos no gerenciador.');
-      return;
-    }
-    // Converte o mapa para o mesmo formato que dadosContatos
-    fonteContatos = Array.from(mapaDb.entries()).map(([normalizado, telefone]) => ({
-      nome: normalizado, // será comparado via normalizarTexto
-      numero: telefone,
-      _fromDb: true
-    }));
+export function processarDados() {
+  if (!state.dadosCategoria || !state.dadosContatos) {
+    return;
   }
 
   try {
@@ -129,12 +99,11 @@ export async function processarDados() {
     const setoresNaoEncontrados = [];
     const setoresSemDetalhes = [];
 
-    fonteContatos.forEach((contato) => {
+    state.dadosContatos.forEach((contato) => {
       const nomeSetor =
         contato.nome || obterCampo(contato, 'nome_setor', 'setor', 'nome');
       const telefone = contato.numero;
-      // Se veio do banco, o nome já é normalizado; senão normaliza
-      const nomeNormalizado = contato._fromDb ? nomeSetor : normalizarTexto(nomeSetor);
+      const nomeNormalizado = normalizarTexto(nomeSetor);
 
       if (!nomeNormalizado) return;
 
@@ -355,12 +324,6 @@ export function carregarArquivoCategoria(event) {
       'success',
       `Arquivo de orcamento por categoria carregado: ${state.dadosCategoria.length} registros.`
     );
-
-    // Extrai setores e abre o modal de contatos
-    const setoresUnicos = extrairSetoresUnicos();
-    adicionarLog('info', `${setoresUnicos.length} setores identificados. Abrindo gerenciador de contatos...`);
-    abrirModalContatos(setoresUnicos);
-
     processarDados();
     refreshUI();
   });
