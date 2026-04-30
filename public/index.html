@@ -53,25 +53,15 @@
                         <div id="statusCategoria">Aguardando arquivo...</div>
                     </div>
                     
-                    <div class="upload-card" id="uploadCard3">
+                    <div class="upload-card upload-card-action" id="uploadCardContatos">
                         <div class="file-icon">📞</div>
-                        <strong>Contatos Setores</strong>
-                        <p style="margin: 10px 0; color: #666;">contato_setores.xlsx (opcional)</p>
-                        <label class="file-label" for="fileContatos">
-                            Carregar Arquivo
-                        </label>
-                        <input type="file" id="fileContatos" class="file-input" accept=".xlsx,.xls,.csv">
-                        <div id="statusContatos">Aguardando arquivo...</div>
-                    </div>
-
-                    <div class="upload-card upload-card-action" id="uploadCard4">
-                        <div class="file-icon">✏️</div>
-                        <strong>Gerenciar Contatos</strong>
-                        <p style="margin: 10px 0; color: #666;">Editar e salvar números dos setores</p>
+                        <strong>Contatos dos Setores</strong>
+                        <p style="margin: 10px 0; color: #666;">Importe via planilha ou gerencie manualmente</p>
                         <button class="file-label btn-gerenciar" id="btnGerenciarContatos">
-                            Abrir Gerenciador
+                            Gerenciar Contatos
                         </button>
-                        <div id="statusContatosDb">Contatos salvos no banco local</div>
+                        <input type="file" id="fileContatos" class="file-input" accept=".xlsx,.xls,.csv" style="display:none">
+                        <div id="statusContatos">Aguardando...</div>
                     </div>
                 </div>
             </div>
@@ -136,22 +126,44 @@
         </div>
     </div>
 
-<!-- Modal de Gerenciamento de Contatos -->
+<!-- Modal de Escolha: importar via arquivo OU digitar -->
+<div class="modal-overlay" id="modalEscolhaContatos" role="dialog" aria-modal="true">
+    <div class="modal-box modal-box-sm">
+        <div class="modal-header">
+            <h2>📞 Como deseja informar os contatos?</h2>
+            <button class="modal-close" id="btnEscolhaFechar" aria-label="Fechar">✕</button>
+        </div>
+        <p class="modal-subtitle">Escolha como deseja cadastrar os números de WhatsApp dos setores identificados na planilha.</p>
+        <div class="modal-escolha-opcoes">
+            <button class="opcao-card" id="btnEscolhaArquivo">
+                <span class="opcao-icon">📂</span>
+                <strong>Importar via Arquivo</strong>
+                <span class="opcao-desc">Carregue uma planilha (.xlsx / .csv) com os contatos dos setores</span>
+            </button>
+            <button class="opcao-card" id="btnEscolhaDigitar">
+                <span class="opcao-icon">✏️</span>
+                <strong>Digitar / Usar Contatos Salvos</strong>
+                <span class="opcao-desc">Cadastre ou edite os números manualmente. Contatos salvos são carregados automaticamente</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Gerenciador de Contatos (múltiplos por setor) -->
 <div class="modal-overlay" id="modalContatos" role="dialog" aria-modal="true" aria-labelledby="modalContatosTitulo">
     <div class="modal-box">
         <div class="modal-header">
-            <h2 id="modalContatosTitulo">📞 Gerenciar Contatos dos Setores</h2>
+            <h2 id="modalContatosTitulo">📞 Contatos dos Setores</h2>
             <button class="modal-close" id="btnFecharModalContatos" aria-label="Fechar modal">✕</button>
         </div>
-        <p class="modal-subtitle">Preencha ou edite os números. Os contatos salvos serão usados automaticamente nos próximos disparos.</p>
+        <p class="modal-subtitle">Adicione um ou mais contatos por setor. Os números salvos são usados automaticamente nos próximos disparos.</p>
         <div class="modal-body">
             <div id="listaContatosModal" class="lista-contatos-modal">
                 <!-- Preenchido dinamicamente por contatos.js -->
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-modal-cancelar" id="btnCancelarModalContatos">Cancelar</button>
-            <button class="btn btn-modal-salvar" id="btnSalvarContatos">💾 Salvar Contatos</button>
+            <button class="btn btn-modal-salvar" id="btnConcluidoContatos">✅ Concluído</button>
         </div>
     </div>
 </div>

@@ -11,46 +11,54 @@ import { dispararMensagens } from './messaging.js';
 import {
   abrirModalContatos,
   fecharModalContatos,
-  salvarContatosDoModal
+  abrirModalEscolhaContatos,
+  fecharModalEscolha,
+  acionarImportacaoArquivo
 } from './contatos.js';
 
 function bindEvents() {
   const testApiBtn = document.getElementById('testApiBtn');
-  if (testApiBtn) {
-    testApiBtn.addEventListener('click', testarAPI);
-  }
+  if (testApiBtn) testApiBtn.addEventListener('click', testarAPI);
 
   const connectWhatsAppBtn = document.getElementById('connectWhatsAppBtn');
-  if (connectWhatsAppBtn) {
-    connectWhatsAppBtn.addEventListener('click', exibirQRCode);
-  }
+  if (connectWhatsAppBtn) connectWhatsAppBtn.addEventListener('click', exibirQRCode);
 
   const refreshBtn = document.getElementById('refreshBtn');
-  if (refreshBtn) {
-    refreshBtn.addEventListener('click', recarregarDados);
-  }
+  if (refreshBtn) refreshBtn.addEventListener('click', recarregarDados);
 
   const togglePdfCheckbox = document.getElementById('togglePdfCheckbox');
-  if (togglePdfCheckbox) {
-    togglePdfCheckbox.addEventListener('change', toggleEnvioPDF);
-  }
+  if (togglePdfCheckbox) togglePdfCheckbox.addEventListener('change', toggleEnvioPDF);
 
   const disparadorBtn = document.getElementById('disparadorBtn');
-  if (disparadorBtn) {
-    disparadorBtn.addEventListener('click', dispararMensagens);
-  }
+  if (disparadorBtn) disparadorBtn.addEventListener('click', dispararMensagens);
 
   const fileCategoria = document.getElementById('fileCategoria');
-  if (fileCategoria) {
-    fileCategoria.addEventListener('change', carregarArquivoCategoria);
-  }
+  if (fileCategoria) fileCategoria.addEventListener('change', carregarArquivoCategoria);
 
+  // fileContatos: oculto, acionado via botão "Importar Arquivo" no modal de escolha
   const fileContatos = document.getElementById('fileContatos');
-  if (fileContatos) {
-    fileContatos.addEventListener('change', carregarArquivoContatos);
-  }
+  if (fileContatos) fileContatos.addEventListener('change', carregarArquivoContatos);
 
-  // Botão manual "Gerenciar Contatos"
+  // ── Modal de Escolha ──────────────────────────────────────────────────────
+  // Fechar pelo overlay
+  const modalEscolha = document.getElementById('modalEscolhaContatos');
+  if (modalEscolha) {
+    modalEscolha.addEventListener('click', (e) => {
+      if (e.target === modalEscolha) fecharModalEscolha();
+    });
+  }
+  document.getElementById('btnEscolhaFechar')?.addEventListener('click', fecharModalEscolha);
+
+  // Opção 1: importar arquivo
+  document.getElementById('btnEscolhaArquivo')?.addEventListener('click', acionarImportacaoArquivo);
+
+  // Opção 2: digitar / usar salvos
+  document.getElementById('btnEscolhaDigitar')?.addEventListener('click', () => {
+    fecharModalEscolha();
+    abrirModalContatos();
+  });
+
+  // ── Modal Gerenciador de Contatos ─────────────────────────────────────────
   const btnGerenciar = document.getElementById('btnGerenciarContatos');
   if (btnGerenciar) {
     btnGerenciar.addEventListener('click', () => {
@@ -63,13 +71,9 @@ function bindEvents() {
     });
   }
 
-  // Modal: fechar pelo botão ✕
-  const btnFechar = document.getElementById('btnFecharModalContatos');
-  if (btnFechar) {
-    btnFechar.addEventListener('click', fecharModalContatos);
-  }
+  const btnFecharContatos = document.getElementById('btnFecharModalContatos');
+  if (btnFecharContatos) btnFecharContatos.addEventListener('click', fecharModalContatos);
 
-  // Modal: fechar clicando no overlay
   const modalContatos = document.getElementById('modalContatos');
   if (modalContatos) {
     modalContatos.addEventListener('click', (e) => {
@@ -77,12 +81,10 @@ function bindEvents() {
     });
   }
 
-  // Modal: salvar contatos
-  const btnSalvar = document.getElementById('btnSalvarContatos');
-  if (btnSalvar) {
-    btnSalvar.addEventListener('click', salvarContatosDoModal);
-  }
+  // Fechar gerenciador via botão "Concluído"
+  document.getElementById('btnConcluidoContatos')?.addEventListener('click', fecharModalContatos);
 }
+
 
 document.addEventListener('DOMContentLoaded', () => {
   bindEvents();

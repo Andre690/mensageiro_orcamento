@@ -759,8 +759,233 @@ body {
     box-shadow: 0 5px 16px rgba(37, 211, 102, 0.45);
 }
 
+}
+
 @media (max-width: 540px) {
     .contato-row {
         grid-template-columns: 1fr;
     }
-}
+}
+
+/* ─── Modal tamanho pequeno ──────────────────────────────────────────────────── */
+.modal-box-sm {
+    width: min(480px, 95vw);
+}
+
+/* ─── Modal de Escolha: dois cards de opção ─────────────────────────────────── */
+.modal-escolha-opcoes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 20px 24px 28px;
+}
+
+.opcao-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 24px 16px;
+    border: 2px solid #e0e7ff;
+    border-radius: 16px;
+    background: #f8f9ff;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: center;
+    font-family: inherit;
+}
+
+.opcao-card:hover {
+    border-color: #056eff;
+    background: #eef3ff;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(5, 110, 255, 0.15);
+}
+
+.opcao-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.opcao-card strong {
+    font-size: 0.95rem;
+    color: #1a1a2e;
+}
+
+.opcao-desc {
+    font-size: 0.8rem;
+    color: #666;
+    line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+    .modal-escolha-opcoes {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ─── Seção de setor no gerenciador (múltiplos contatos) ─────────────────────── */
+.contato-setor-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    margin-bottom: 4px;
+}
+
+.contato-setor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.contato-setor-nome {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1e293b;
+}
+
+.btn-add-contato {
+    background: linear-gradient(135deg, #056eff, #2d9ad7);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-add-contato:hover {
+    box-shadow: 0 4px 12px rgba(5, 110, 255, 0.35);
+    transform: translateY(-1px);
+}
+
+/* Chips de contatos salvos */
+.contato-lista-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+    min-height: 48px;
+}
+
+.contato-vazio-hint {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    font-style: italic;
+    align-self: center;
+}
+
+.contato-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 20px;
+    padding: 5px 10px 5px 12px;
+    font-size: 0.84rem;
+}
+
+.chip-nome {
+    font-weight: 600;
+    color: #1e40af;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chip-tel {
+    color: #3b82f6;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+}
+
+.chip-remover {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0 2px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.chip-remover:hover {
+    color: #dc3545;
+}
+
+/* Formulário inline de novo contato */
+.contato-novo-form {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px 14px;
+    border-top: 1px dashed #e2e8f0;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.contato-input-nome {
+    flex: 1;
+    min-width: 100px;
+    padding: 9px 12px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: white;
+}
+
+.contato-input-nome:focus {
+    outline: none;
+    border-color: #056eff;
+    box-shadow: 0 0 0 3px rgba(5, 110, 255, 0.1);
+}
+
+.contato-novo-form .contato-input {
+    flex: 1;
+    min-width: 140px;
+}
+
+.btn-confirmar-contato {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-confirmar-contato:hover {
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);
+}
+
+.btn-cancelar-form {
+    background: none;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.88rem;
+    color: #666;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-cancelar-form:hover {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+

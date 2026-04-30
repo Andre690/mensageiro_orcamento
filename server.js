@@ -3,7 +3,7 @@ const express = require("express");
 const path = require("path");
 const axios = require("axios");
 const { gerarPDFOrcamento } = require("./services/pdf.service");
-const { listarContatos, salvarContatos } = require("./services/db.service");
+const { listarContatos, substituirContatosDoSetor, removerContato } = require("./services/db.service");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -237,7 +237,7 @@ app.get("/api/qrcode", async (req, res) => {
 
 // ─── Rotas de Contatos (SQLite) ─────────────────────────────────────────────
 
-// Lista todos os contatos salvos no banco
+// Lista todos os contatos salvos
 app.get("/api/contatos", (req, res) => {
     try {
         const contatos = listarContatos();
@@ -247,14 +247,14 @@ app.get("/api/contatos", (req, res) => {
     }
 });
 
-// Salva / atualiza contatos no banco
-app.post("/api/contatos", (req, res) => {
-    const { contatos } = req.body;
+// Substitui todos os contatos de um setor pelos enviados
+app.post("/api/contatos/setor", (req, res) => {
+    const { setor_normalizado, contatos } = req.body;
 
-    if (!Array.isArray(contatos) || contatos.length === 0) {
+    if (!setor_normalizado || !Array.isArray(contatos)) {
         return res.status(400).json({
             error: true,
-            message: "Envie um array 'contatos' com objetos { setor, setor_normalizado, telefone }."
+            message: "Envie 'setor_normalizado' e um array 'contatos'."
         });
     }
 
@@ -268,8 +268,22 @@ app.post("/api/contatos", (req, res) => {
     }
 
     try {
-        salvarContatos(contatos);
-        res.json({ success: true, message: `${contatos.length} contato(s) salvo(s) com sucesso.` });
+        substituirContatosDoSetor(setor_normalizado, contatos);
+        res.json({ success: true, message: `Contatos do setor atualizados.` });
+    } catch (error) {
+        res.status(500).json({ error: true, message: error.message });
+    }
+});
+
+// Remove um contato pelo ID
+app.delete("/api/contatos/:id", (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!id) {
+        return res.status(400).json({ error: true, message: "ID inválido." });
+    }
+    try {
+        removerContato(id);
+        res.json({ success: true, message: "Contato removido." });
     } catch (error) {
         res.status(500).json({ error: true, message: error.message });
     }

@@ -7,7 +7,7 @@ import {
 } from './utils.js';
 import { adicionarLog } from './logger.js';
 import { refreshUI } from './ui.js';
-import { buscarContatosSalvos, abrirModalContatos } from './contatos.js';
+import { buscarContatosSalvos, abrirModalEscolhaContatos } from './contatos.js';
 
 function setStatus(id, texto, cor, loadedCardId) {
   const statusEl = document.getElementById(id);
@@ -331,10 +331,10 @@ export function carregarArquivoCategoria(event) {
       `Arquivo de orcamento por categoria carregado: ${state.dadosCategoria.length} registros.`
     );
 
-    // Extrai setores únicos e abre o gerenciador de contatos
+    // Extrai setores e abre modal de escolha (importar arquivo OU digitar)
     const setoresUnicos = extrairSetoresUnicos();
-    adicionarLog('info', `${setoresUnicos.length} setores identificados. Abrindo gerenciador de contatos...`);
-    abrirModalContatos(setoresUnicos);
+    adicionarLog('info', `${setoresUnicos.length} setores identificados.`);
+    abrirModalEscolhaContatos(setoresUnicos);
 
     processarDados();
     refreshUI();
