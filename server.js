@@ -3,6 +3,7 @@ const express = require("express");
 const path = require("path");
 const axios = require("axios");
 const { gerarPDFOrcamento } = require("./services/pdf.service");
+const { listarContatos, salvarContatos } = require("./services/db.service");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -231,6 +232,46 @@ app.get("/api/qrcode", async (req, res) => {
             error: true, 
             message: error.message 
         });
+    }
+});
+
+// ─── Rotas de Contatos (SQLite) ─────────────────────────────────────────────
+
+// Lista todos os contatos salvos no banco
+app.get("/api/contatos", (req, res) => {
+    try {
+        const contatos = listarContatos();
+        res.json({ success: true, contatos });
+    } catch (error) {
+        res.status(500).json({ error: true, message: error.message });
+    }
+});
+
+// Salva / atualiza contatos no banco
+app.post("/api/contatos", (req, res) => {
+    const { contatos } = req.body;
+
+    if (!Array.isArray(contatos) || contatos.length === 0) {
+        return res.status(400).json({
+            error: true,
+            message: "Envie um array 'contatos' com objetos { setor, setor_normalizado, telefone }."
+        });
+    }
+
+    for (const c of contatos) {
+        if (!c.setor || !c.setor_normalizado || !c.telefone) {
+            return res.status(400).json({
+                error: true,
+                message: "Cada contato precisa de 'setor', 'setor_normalizado' e 'telefone'."
+            });
+        }
+    }
+
+    try {
+        salvarContatos(contatos);
+        res.json({ success: true, message: `${contatos.length} contato(s) salvo(s) com sucesso.` });
+    } catch (error) {
+        res.status(500).json({ error: true, message: error.message });
     }
 });
 

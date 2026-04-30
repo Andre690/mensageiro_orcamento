@@ -7,6 +7,7 @@ import {
 } from './utils.js';
 import { adicionarLog } from './logger.js';
 import { refreshUI } from './ui.js';
+import { buscarContatosSalvos, abrirModalContatos } from './contatos.js';
 
 function setStatus(id, texto, cor, loadedCardId) {
   const statusEl = document.getElementById(id);
@@ -88,9 +89,35 @@ function processarArquivo(file, callback) {
   }
 }
 
-export function processarDados() {
-  if (!state.dadosCategoria || !state.dadosContatos) {
-    return;
+/**
+ * Retorna a lista de nomes únicos de setores da planilha carregada.
+ * @returns {string[]}
+ */
+export function extrairSetoresUnicos() {
+  if (!state.dadosCategoria) return [];
+  const setores = new Set();
+  state.dadosCategoria.forEach((r) => { if (r.setor) setores.add(r.setor); });
+  return Array.from(setores).sort();
+}
+
+export async function processarDados() {
+  if (!state.dadosCategoria) return;
+
+  // Fonte de contatos: arquivo carregado OU banco SQLite
+  let fonteContatos = state.dadosContatos;
+
+  if (!fonteContatos) {
+    const mapaDb = await buscarContatosSalvos();
+    if (mapaDb.size === 0) {
+      adicionarLog('warning', 'Carregue um arquivo de contatos ou preencha os números no Gerenciador de Contatos.');
+      return;
+    }
+    // Converte o mapa { normalizado → telefone } para o mesmo formato que dadosContatos
+    fonteContatos = Array.from(mapaDb.entries()).map(([normalizado, telefone]) => ({
+      nome: normalizado,
+      numero: telefone,
+      _fromDb: true  // sinaliza que o nome já está normalizado
+    }));
   }
 
   try {
@@ -99,11 +126,11 @@ export function processarDados() {
     const setoresNaoEncontrados = [];
     const setoresSemDetalhes = [];
 
-    state.dadosContatos.forEach((contato) => {
-      const nomeSetor =
-        contato.nome || obterCampo(contato, 'nome_setor', 'setor', 'nome');
-      const telefone = contato.numero;
-      const nomeNormalizado = normalizarTexto(nomeSetor);
+    fonteContatos.forEach((contato) => {
+      const nomeSetor = contato.nome || obterCampo(contato, 'nome_setor', 'setor', 'nome');
+      const telefone  = contato.numero;
+      // Se veio do banco, o nome já é normalizado; senão normaliza agora
+      const nomeNormalizado = contato._fromDb ? nomeSetor : normalizarTexto(nomeSetor);
 
       if (!nomeNormalizado) return;
 
@@ -324,6 +351,12 @@ export function carregarArquivoCategoria(event) {
       'success',
       `Arquivo de orcamento por categoria carregado: ${state.dadosCategoria.length} registros.`
     );
+
+    // Extrai setores únicos e abre o gerenciador de contatos
+    const setoresUnicos = extrairSetoresUnicos();
+    adicionarLog('info', `${setoresUnicos.length} setores identificados. Abrindo gerenciador de contatos...`);
+    abrirModalContatos(setoresUnicos);
+
     processarDados();
     refreshUI();
   });

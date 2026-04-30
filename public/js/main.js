@@ -3,10 +3,16 @@ import { testarAPI, exibirQRCode } from './api.js';
 import { toggleEnvioPDF, atualizarEstadoPdf } from './pdf.js';
 import {
   carregarArquivoCategoria,
-  carregarArquivoContatos
+  carregarArquivoContatos,
+  extrairSetoresUnicos
 } from './dataLoader.js';
 import { refreshUI, recarregarDados } from './ui.js';
 import { dispararMensagens } from './messaging.js';
+import {
+  abrirModalContatos,
+  fecharModalContatos,
+  salvarContatosDoModal
+} from './contatos.js';
 
 function bindEvents() {
   const testApiBtn = document.getElementById('testApiBtn');
@@ -43,6 +49,39 @@ function bindEvents() {
   if (fileContatos) {
     fileContatos.addEventListener('change', carregarArquivoContatos);
   }
+
+  // Botão manual "Gerenciar Contatos"
+  const btnGerenciar = document.getElementById('btnGerenciarContatos');
+  if (btnGerenciar) {
+    btnGerenciar.addEventListener('click', () => {
+      const setores = extrairSetoresUnicos();
+      if (setores.length === 0) {
+        adicionarLog('warning', 'Carregue a planilha de orçamento primeiro para gerenciar os contatos.');
+        return;
+      }
+      abrirModalContatos(setores);
+    });
+  }
+
+  // Modal: fechar pelo botão ✕
+  const btnFechar = document.getElementById('btnFecharModalContatos');
+  if (btnFechar) {
+    btnFechar.addEventListener('click', fecharModalContatos);
+  }
+
+  // Modal: fechar clicando no overlay
+  const modalContatos = document.getElementById('modalContatos');
+  if (modalContatos) {
+    modalContatos.addEventListener('click', (e) => {
+      if (e.target === modalContatos) fecharModalContatos();
+    });
+  }
+
+  // Modal: salvar contatos
+  const btnSalvar = document.getElementById('btnSalvarContatos');
+  if (btnSalvar) {
+    btnSalvar.addEventListener('click', salvarContatosDoModal);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -59,4 +98,4 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     testarAPI();
   }, 1000);
-});
+});
