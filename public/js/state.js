@@ -1,5 +1,4 @@
 export const state = {
-  dadosSetor: null,
   dadosCategoria: null,
   dadosContatos: null,
   dadosProcessados: [],
@@ -11,7 +10,6 @@ export function clearDadosProcessados() {
 }
 
 export function resetDadosCarregados() {
-  state.dadosSetor = null;
   state.dadosCategoria = null;
   state.dadosContatos = null;
   clearDadosProcessados();

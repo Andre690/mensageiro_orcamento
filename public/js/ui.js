@@ -109,7 +109,6 @@ export function recarregarDados() {
   resetDadosCarregados();
 
   const statusElements = [
-    { id: 'statusSetor', card: 'uploadCard1' },
     { id: 'statusCategoria', card: 'uploadCard2' },
     { id: 'statusContatos', card: 'uploadCard3' }
   ];
@@ -126,7 +125,6 @@ export function recarregarDados() {
     }
   });
 
-  getElement('fileSetor').value = '';
   getElement('fileCategoria').value = '';
   getElement('fileContatos').value = '';
 

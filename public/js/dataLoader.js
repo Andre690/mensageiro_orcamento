@@ -1,4 +1,4 @@
-﻿import { state } from './state.js';
+import { state } from './state.js';
 import {
   normalizarTexto,
   obterCampo,
@@ -89,7 +89,7 @@ function processarArquivo(file, callback) {
 }
 
 export function processarDados() {
-  if (!state.dadosSetor || !state.dadosCategoria || !state.dadosContatos) {
+  if (!state.dadosCategoria || !state.dadosContatos) {
     return;
   }
 
@@ -107,14 +107,11 @@ export function processarDados() {
 
       if (!nomeNormalizado) return;
 
-      const setorDados = state.dadosSetor.find(
-        (registro) => normalizarTexto(registro.setor) === nomeNormalizado
-      );
       const registrosDetalhe = state.dadosCategoria.filter(
         (registro) => normalizarTexto(registro.setor) === nomeNormalizado
       );
 
-      if (!setorDados && registrosDetalhe.length === 0) {
+      if (registrosDetalhe.length === 0) {
         setoresNaoEncontrados.push(nomeSetor);
         return;
       }
@@ -206,20 +203,14 @@ export function processarDados() {
         setoresSemDetalhes.push(nomeSetor);
       }
 
-      const totalDetalheOrcado = grupos.reduce(
+      const totalOrcado = grupos.reduce(
         (soma, grupo) => soma + (grupo.orcado || 0),
         0
       );
-      const totalDetalheRealizado = grupos.reduce(
+      const totalRealizado = grupos.reduce(
         (soma, grupo) => soma + (grupo.realizado || 0),
         0
       );
-
-      let totalOrcado = setorDados ? setorDados.orcado : 0;
-      let totalRealizado = setorDados ? setorDados.realizado : 0;
-
-      if (!totalOrcado) totalOrcado = totalDetalheOrcado;
-      if (!totalRealizado) totalRealizado = totalDetalheRealizado;
 
       state.dadosProcessados.push({
         nome: nomeSetor,
@@ -265,65 +256,6 @@ export function processarDados() {
     adicionarLog('error', `Erro ao processar dados: ${error.message}`);
     console.error('Erro detalhado:', error);
   }
-}
-
-export function carregarArquivoSetor(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  processarArquivo(file, (error, dadosBrutos) => {
-    if (error) {
-      adicionarLog(
-        'error',
-        `Erro ao carregar arquivo de orcamento geral: ${error.message}`
-      );
-      setStatus('statusSetor', 'Erro', '#dc3545');
-      return;
-    }
-
-    const registros = [];
-
-    dadosBrutos.forEach((linhaOriginal) => {
-      const setorNome = obterCampo(linhaOriginal, 'setor', 'nome_setor');
-      const orcadoBruto = obterCampo(
-        linhaOriginal,
-        'orcamento_total',
-        'orcado_total',
-        'orcado_mensal',
-        'orcado'
-      );
-      const realizadoBruto = obterCampo(linhaOriginal, 'realizado');
-
-      if (!setorNome || (orcadoBruto === undefined && realizadoBruto === undefined)) {
-        return;
-      }
-
-      registros.push({
-        setor: setorNome,
-        orcado: parseNumero(orcadoBruto),
-        realizado: parseNumero(realizadoBruto),
-        original: linhaOriginal
-      });
-    });
-
-    if (registros.length === 0) {
-      adicionarLog(
-        'error',
-        'Arquivo de orcamento geral precisa conter colunas de setor e valores de orcado/realizado.'
-      );
-      setStatus('statusSetor', 'Formato invalido', '#dc3545');
-      return;
-    }
-
-    state.dadosSetor = registros;
-    setStatus('statusSetor', 'Carregado', '#28a745', 'uploadCard1');
-    adicionarLog(
-      'success',
-      `Arquivo de orcamento geral carregado: ${state.dadosSetor.length} registros.`
-    );
-    processarDados();
-    refreshUI();
-  });
 }
 
 export function carregarArquivoCategoria(event) {

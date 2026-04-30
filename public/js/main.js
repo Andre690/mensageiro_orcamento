@@ -2,7 +2,6 @@ import { adicionarLog } from './logger.js';
 import { testarAPI, exibirQRCode } from './api.js';
 import { toggleEnvioPDF, atualizarEstadoPdf } from './pdf.js';
 import {
-  carregarArquivoSetor,
   carregarArquivoCategoria,
   carregarArquivoContatos
 } from './dataLoader.js';
@@ -33,11 +32,6 @@ function bindEvents() {
   const disparadorBtn = document.getElementById('disparadorBtn');
   if (disparadorBtn) {
     disparadorBtn.addEventListener('click', dispararMensagens);
-  }
-
-  const fileSetor = document.getElementById('fileSetor');
-  if (fileSetor) {
-    fileSetor.addEventListener('change', carregarArquivoSetor);
   }
 
   const fileCategoria = document.getElementById('fileCategoria');
