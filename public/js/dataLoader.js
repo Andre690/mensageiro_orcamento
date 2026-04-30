@@ -341,7 +341,7 @@ export function carregarArquivoCategoria(event) {
     setStatus('statusCategoria', 'Carregado', '#28a745', 'uploadCard2');
     adicionarLog(
       'success',
-      `Arquivo de orcamento por categoria carregado: ${state.dadosCategoria.length} registros.`
+      `Arquivo de orçamento atualizado: ${state.dadosCategoria.length} registros.`
     );
 
     // Habilita o card de contatos (remove estado acinzentado)
@@ -351,14 +351,19 @@ export function carregarArquivoCategoria(event) {
       cardContatos.removeAttribute('title');
     }
 
-    // Extrai setores e abre modal de escolha (importar arquivo OU digitar)
-    const setoresUnicos = extrairSetoresUnicos();
-    adicionarLog('info', `${setoresUnicos.length} setores identificados.`);
-    abrirModalEscolhaContatos(setoresUnicos);
-
-
     processarDados();
     refreshUI();
+
+    // Se ainda não existirem contatos processados, sugere o gerenciador
+    const contatosCadastrados = state.dadosProcessados.some(s => s.telefones && s.telefones.length > 0);
+    if (!contatosCadastrados) {
+      const setoresUnicos = extrairSetoresUnicos();
+      adicionarLog('info', `${setoresUnicos.length} setores identificados. Configure os contatos.`);
+      abrirModalEscolhaContatos(setoresUnicos);
+    }
+    
+    // Reseta o input para permitir carregar o mesmo arquivo repetidas vezes caso ele seja atualizado
+    event.target.value = '';
   });
 }
 
@@ -411,6 +416,7 @@ export function carregarArquivoContatos(event) {
     );
     processarDados();
     refreshUI();
+    event.target.value = '';
   });
 }
 
