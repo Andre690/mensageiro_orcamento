@@ -110,7 +110,7 @@ export function recarregarDados() {
 
   const statusElements = [
     { id: 'statusCategoria', card: 'uploadCard2' },
-    { id: 'statusContatos', card: 'uploadCard3' }
+    { id: 'statusContatos', card: 'uploadCardContatos' }
   ];
 
   statusElements.forEach(({ id, card }) => {
@@ -127,6 +127,13 @@ export function recarregarDados() {
 
   getElement('fileCategoria').value = '';
   getElement('fileContatos').value = '';
+
+  // Volta o card de contatos para o estado desabilitado/acinzentado
+  const cardContatos = getElement('uploadCardContatos');
+  if (cardContatos) {
+    cardContatos.classList.add('upload-card-disabled');
+    cardContatos.title = 'Carregue a planilha de orçamento primeiro';
+  }
 
   refreshUI();
   atualizarEstadoPdf();

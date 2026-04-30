@@ -17,8 +17,10 @@ utils/
 renderTabela_old.txt
 tmp_view.txt
 
-# ─── Banco de dados local ─────────────────────────────────────────
+# ─── Banco de dados local ─────────────────────────────────────────────────
 database.sqlite
+database.sqlite-shm
+database.sqlite-wal
 
 
 # ─── Logs ────────────────────────────────────────────────────────

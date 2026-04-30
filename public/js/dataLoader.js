@@ -331,10 +331,18 @@ export function carregarArquivoCategoria(event) {
       `Arquivo de orcamento por categoria carregado: ${state.dadosCategoria.length} registros.`
     );
 
+    // Habilita o card de contatos (remove estado acinzentado)
+    const cardContatos = document.getElementById('uploadCardContatos');
+    if (cardContatos) {
+      cardContatos.classList.remove('upload-card-disabled');
+      cardContatos.removeAttribute('title');
+    }
+
     // Extrai setores e abre modal de escolha (importar arquivo OU digitar)
     const setoresUnicos = extrairSetoresUnicos();
     adicionarLog('info', `${setoresUnicos.length} setores identificados.`);
     abrirModalEscolhaContatos(setoresUnicos);
+
 
     processarDados();
     refreshUI();
