@@ -1,5 +1,7 @@
 import { normalizarTexto, formatarTelefone } from './utils.js';
 import { adicionarLog } from './logger.js';
+import { processarDados } from './dataLoader.js';
+import { refreshUI } from './ui.js';
 
 const API_BASE = '/api';
 
@@ -223,6 +225,10 @@ async function confirmarNovoContato(normalizado, nomeSetor, section) {
     inputNome.value = '';
     form.style.display = 'none';
     adicionarLog('success', `Contato adicionado para ${nomeSetor}.`);
+    
+    // Atualiza a tabela geral por baixo
+    await processarDados();
+    refreshUI();
   } catch (err) {
     adicionarLog('error', `Erro ao adicionar contato: ${err.message}`);
   }
@@ -242,6 +248,10 @@ async function removerContatoLocal(id, normalizado) {
       .map((c) => ({ id: c.id, nome_contato: c.nome_contato || '', telefone: c.telefone }));
     renderizarChips(normalizado, atualizados);
     adicionarLog('success', 'Contato removido.');
+    
+    // Atualiza a tabela geral por baixo
+    await processarDados();
+    refreshUI();
   } catch (err) {
     adicionarLog('error', `Erro ao remover contato: ${err.message}`);
   }

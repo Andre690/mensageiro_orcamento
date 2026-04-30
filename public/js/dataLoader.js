@@ -134,6 +134,9 @@ export async function processarDados() {
       'warning',
       'Nenhum contato encontrado no banco ou arquivo. Os disparos não serão possíveis até que você adicione contatos.'
     );
+    setStatus('statusContatos', 'Sem contatos', '#dc3545', 'uploadCardContatos');
+  } else if (!state.dadosContatos) {
+    setStatus('statusContatos', 'Usando salvos (Banco)', '#056eff', 'uploadCardContatos');
   }
 
   // ── Agrupa registros da Categoria por setor ───────────────────────────────
