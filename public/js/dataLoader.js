@@ -7,7 +7,7 @@ import {
 } from './utils.js';
 import { adicionarLog } from './logger.js';
 import { refreshUI } from './ui.js';
-import { buscarContatosSalvos, abrirModalEscolhaContatos } from './contatos.js';
+import { buscarContatosAgrupados, abrirModalEscolhaContatos } from './contatos.js';
 
 function setStatus(id, texto, cor, loadedCardId) {
   const statusEl = document.getElementById(id);
@@ -103,25 +103,37 @@ export function extrairSetoresUnicos() {
 export async function processarDados() {
   if (!state.dadosCategoria) return;
 
-  // ── Constrói mapa de telefones: setor_normalizado → telefone ──────────────
-  // Fonte prioritária: arquivo carregado; fallback: banco SQLite
+  // ── Constrói mapa de telefones: setor_normalizado → Set<telefone> ──────────────
+  // Fonte: arquivo carregado E banco SQLite (mesclados)
   const mapaFones = new Map();
 
+  // 1. Pega do banco
+  const contatosDb = await buscarContatosAgrupados();
+  contatosDb.forEach((arrayContatos, normalizado) => {
+    if (!mapaFones.has(normalizado)) mapaFones.set(normalizado, new Set());
+    arrayContatos.forEach(c => {
+      if (c.telefone) mapaFones.get(normalizado).add(c.telefone);
+    });
+  });
+
+  // 2. Pega do arquivo, se existir
   if (state.dadosContatos) {
     state.dadosContatos.forEach((c) => {
       const nome = c.nome || obterCampo(c, 'nome_setor', 'setor', 'nome');
-      if (nome) mapaFones.set(normalizarTexto(nome), c.numero || '');
+      if (nome) {
+        const norm = normalizarTexto(nome);
+        if (!mapaFones.has(norm)) mapaFones.set(norm, new Set());
+        if (c.numero) mapaFones.get(norm).add(c.numero);
+      }
     });
-  } else {
-    const mapaDb = await buscarContatosSalvos();
-    if (mapaDb.size === 0) {
-      adicionarLog(
-        'warning',
-        'Carregue um arquivo de contatos ou preencha os números no Gerenciador de Contatos.'
-      );
-      return;
-    }
-    mapaDb.forEach((telefone, normalizado) => mapaFones.set(normalizado, telefone));
+  }
+
+  // Avisa se estiver completamente sem contatos
+  if (mapaFones.size === 0) {
+    adicionarLog(
+      'warning',
+      'Nenhum contato encontrado no banco ou arquivo. Os disparos não serão possíveis até que você adicione contatos.'
+    );
   }
 
   // ── Agrupa registros da Categoria por setor ───────────────────────────────
@@ -212,8 +224,8 @@ export async function processarDados() {
     setoresMap.forEach((setorEntry, nomeNorm) => {
       setoresEncontrados += 1;
 
-      const telefone = mapaFones.get(nomeNorm) || '';
-      if (!telefone) setoresSemContato.push(setorEntry.nomeOriginal);
+      const telefones = Array.from(mapaFones.get(nomeNorm) || []);
+      if (telefones.length === 0) setoresSemContato.push(setorEntry.nomeOriginal);
 
       const grupos = Array.from(setorEntry.gruposMap.values()).map((grupo) => ({
         nome: grupo.nome,
@@ -233,7 +245,8 @@ export async function processarDados() {
 
       state.dadosProcessados.push({
         nome: setorEntry.nomeOriginal,
-        telefone,
+        telefones,
+        telefone: telefones[0] || '', // Mantido por retrocompatibilidade temporária (ui)
         orcado: totalOrcado,
         realizado: totalRealizado,
         grupos,
@@ -400,3 +413,13 @@ export function carregarArquivoContatos(event) {
     refreshUI();
   });
 }
+
+export function removerArquivoContatos() {
+  state.dadosContatos = null;
+  const input = document.getElementById('fileContatos');
+  if (input) input.value = '';
+  setStatus('statusContatos', 'Removido', '#666', 'uploadCard3');
+  adicionarLog('info', 'Planilha de contatos removida. Apenas contatos salvos no banco serão usados.');
+  processarDados();
+  refreshUI();
+}

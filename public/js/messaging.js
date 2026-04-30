@@ -98,7 +98,7 @@ export async function dispararMensagens() {
   for (const [index, setor] of state.dadosProcessados.entries()) {
     try {
       // Pula setor sem contato cadastrado
-      if (!setor.telefone) {
+      if (!setor.telefones || setor.telefones.length === 0) {
         adicionarLog(
           'warning',
           `${setor.nome} - sem telefone cadastrado. Setor ignorado no disparo.`
@@ -107,51 +107,52 @@ export async function dispararMensagens() {
         continue;
       }
 
-      const descricaoPdf = state.enviarPdfHabilitado ? ' + PDF' : '';
-      adicionarLog(
-        'info',
-        `Enviando para ${setor.nome}${descricaoPdf} (${index + 1}/${
-          state.dadosProcessados.length
-        }).`
-      );
+      for (const [foneIndex, telefone] of setor.telefones.entries()) {
+        const descricaoPdf = state.enviarPdfHabilitado ? ' + PDF' : '';
+        const indexSuffix = setor.telefones.length > 1 ? ` (Contato ${foneIndex + 1}/${setor.telefones.length})` : '';
+        adicionarLog(
+          'info',
+          `Enviando para ${setor.nome}${indexSuffix}${descricaoPdf} (${index + 1}/${state.dadosProcessados.length}).`
+        );
 
-      const mensagem = gerarMensagem(setor);
-      const resultado = await enviarMensagemWhatsAppComRetry(
-        mensagem,
-        setor.telefone,
-        setor
-      );
+        const mensagem = gerarMensagem(setor);
+        const resultado = await enviarMensagemWhatsAppComRetry(
+          mensagem,
+          telefone,
+          setor
+        );
 
-      if (resultado.success) {
-        let mensagemSucesso = `${setor.nome} - mensagem enviada com sucesso`;
-        const pdfInfo = resultado.pdf || resultado.response?.pdf;
+        if (resultado.success) {
+          let mensagemSucesso = `${setor.nome}${indexSuffix} - mensagem enviada com sucesso`;
+          const pdfInfo = resultado.pdf || resultado.response?.pdf;
 
-        if (state.enviarPdfHabilitado) {
-          if (pdfInfo?.success) {
-            mensagemSucesso += ' e PDF enviado';
-          } else if (pdfInfo && pdfInfo.success === false) {
-            mensagemSucesso += ' (PDF falhou)';
-            adicionarLog(
-              'warning',
-              `${setor.nome} - falha no envio do PDF: ${pdfInfo.message || 'sem detalhes'}`
-            );
-          } else {
-            mensagemSucesso += ' (PDF sem confirmação)';
+          if (state.enviarPdfHabilitado) {
+            if (pdfInfo?.success) {
+              mensagemSucesso += ' e PDF enviado';
+            } else if (pdfInfo && pdfInfo.success === false) {
+              mensagemSucesso += ' (PDF falhou)';
+              adicionarLog(
+                'warning',
+                `${setor.nome} - falha no envio do PDF: ${pdfInfo.message || 'sem detalhes'}`
+              );
+            } else {
+              mensagemSucesso += ' (PDF sem confirmação)';
+            }
           }
+
+          adicionarLog('success', mensagemSucesso);
+          sucessos += 1;
+        } else {
+          const errorMsg =
+            resultado.response?.message || resultado.error || 'Erro desconhecido';
+          adicionarLog('error', `${setor.nome}${indexSuffix} - erro: ${errorMsg}`);
+          erros += 1;
         }
 
-        adicionarLog('success', mensagemSucesso);
-        sucessos += 1;
-      } else {
-        const errorMsg =
-          resultado.response?.message || resultado.error || 'Erro desconhecido';
-        adicionarLog('error', `${setor.nome} - erro: ${errorMsg}`);
-        erros += 1;
-      }
-
-      const intervalo = state.enviarPdfHabilitado ? 3000 : 2000;
-      if (index < state.dadosProcessados.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, intervalo));
+        const intervalo = state.enviarPdfHabilitado ? 3000 : 2000;
+        if (index < state.dadosProcessados.length - 1 || foneIndex < setor.telefones.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, intervalo));
+        }
       }
     } catch (error) {
       adicionarLog('error', `${setor.nome} - erro: ${error.message}`);

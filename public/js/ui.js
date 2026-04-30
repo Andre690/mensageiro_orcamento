@@ -80,7 +80,7 @@ export function renderizarSetores() {
         <span>${percentual.toFixed(2)}%</span>
       </div>
       <div class="setor-actions">
-        <span>Telefone: ${setor.telefone}</span>
+        <span>Telefone(s): ${setor.telefones && setor.telefones.length > 0 ? setor.telefones.join(', ') : 'Nenhum'}</span>
         <button class="preview-pdf-btn" type="button">Visualizar PDF</button>
         <span>${classificacoesEstouradas} classificação(ões) estourada(s)</span>
       </div>

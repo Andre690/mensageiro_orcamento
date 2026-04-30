@@ -4,7 +4,8 @@ import { toggleEnvioPDF, atualizarEstadoPdf } from './pdf.js';
 import {
   carregarArquivoCategoria,
   carregarArquivoContatos,
-  extrairSetoresUnicos
+  extrairSetoresUnicos,
+  removerArquivoContatos
 } from './dataLoader.js';
 import { refreshUI, recarregarDados } from './ui.js';
 import { dispararMensagens } from './messaging.js';
@@ -83,6 +84,17 @@ function bindEvents() {
 
   // Fechar gerenciador via botão "Concluído"
   document.getElementById('btnConcluidoContatos')?.addEventListener('click', fecharModalContatos);
+
+  // Ações dentro do modal gerenciador
+  document.getElementById('btnAnexarPlanilhaModal')?.addEventListener('click', () => {
+    acionarImportacaoArquivo();
+    document.getElementById('btnRemoverPlanilhaModal').style.display = 'inline-block';
+  });
+
+  document.getElementById('btnRemoverPlanilhaModal')?.addEventListener('click', () => {
+    removerArquivoContatos();
+    document.getElementById('btnRemoverPlanilhaModal').style.display = 'none';
+  });
 }
 
 

@@ -34,7 +34,7 @@ export async function buscarContatosSalvos() {
 /**
  * Busca todos os contatos agrupados em Map<normalizado, [{id, nome_contato, telefone}]>
  */
-async function buscarContatosAgrupados() {
+export async function buscarContatosAgrupados() {
   try {
     const resp = await fetch(`${API_BASE}/contatos`);
     const json = await resp.json();
@@ -134,6 +134,18 @@ export async function abrirModalContatos(nomesDosSetores) {
       if (form) { form.style.display = 'none'; form.querySelector('.contato-input').value = ''; form.querySelector('.contato-input-nome').value = ''; }
     });
   });
+
+  // Controle do botão de remover planilha
+  const btnRemoverPlanilha = document.getElementById('btnRemoverPlanilhaModal');
+  // Se existir arquivo carregado globalmente
+  if (btnRemoverPlanilha) {
+    const inputContatos = document.getElementById('fileContatos');
+    if (inputContatos && inputContatos.files && inputContatos.files.length > 0) {
+      btnRemoverPlanilha.style.display = 'inline-block';
+    } else {
+      btnRemoverPlanilha.style.display = 'none';
+    }
+  }
 
   fecharModalEscolha();
   modal.classList.add('active');
