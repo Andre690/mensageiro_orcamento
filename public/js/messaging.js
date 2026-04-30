@@ -97,6 +97,16 @@ export async function dispararMensagens() {
 
   for (const [index, setor] of state.dadosProcessados.entries()) {
     try {
+      // Pula setor sem contato cadastrado
+      if (!setor.telefone) {
+        adicionarLog(
+          'warning',
+          `${setor.nome} - sem telefone cadastrado. Setor ignorado no disparo.`
+        );
+        erros += 1;
+        continue;
+      }
+
       const descricaoPdf = state.enviarPdfHabilitado ? ' + PDF' : '';
       adicionarLog(
         'info',
