@@ -103,175 +103,153 @@ export function extrairSetoresUnicos() {
 export async function processarDados() {
   if (!state.dadosCategoria) return;
 
-  // Fonte de contatos: arquivo carregado OU banco SQLite
-  let fonteContatos = state.dadosContatos;
+  // ── Constrói mapa de telefones: setor_normalizado → telefone ──────────────
+  // Fonte prioritária: arquivo carregado; fallback: banco SQLite
+  const mapaFones = new Map();
 
-  if (!fonteContatos) {
+  if (state.dadosContatos) {
+    state.dadosContatos.forEach((c) => {
+      const nome = c.nome || obterCampo(c, 'nome_setor', 'setor', 'nome');
+      if (nome) mapaFones.set(normalizarTexto(nome), c.numero || '');
+    });
+  } else {
     const mapaDb = await buscarContatosSalvos();
     if (mapaDb.size === 0) {
-      adicionarLog('warning', 'Carregue um arquivo de contatos ou preencha os números no Gerenciador de Contatos.');
+      adicionarLog(
+        'warning',
+        'Carregue um arquivo de contatos ou preencha os números no Gerenciador de Contatos.'
+      );
       return;
     }
-    // Converte o mapa { normalizado → telefone } para o mesmo formato que dadosContatos
-    fonteContatos = Array.from(mapaDb.entries()).map(([normalizado, telefone]) => ({
-      nome: normalizado,
-      numero: telefone,
-      _fromDb: true  // sinaliza que o nome já está normalizado
-    }));
+    mapaDb.forEach((telefone, normalizado) => mapaFones.set(normalizado, telefone));
   }
 
+  // ── Agrupa registros da Categoria por setor ───────────────────────────────
+  // Estrutura intermediária: Map<setorNormalizado, { nomeOriginal, gruposMap, classificacoesEstouradas }>
+  const setoresMap = new Map();
+
+  state.dadosCategoria.forEach((registro) => {
+    const nomeSetor = registro.setor;
+    if (!nomeSetor) return;
+
+    const nomeNorm = normalizarTexto(nomeSetor);
+
+    if (!setoresMap.has(nomeNorm)) {
+      setoresMap.set(nomeNorm, {
+        nomeOriginal: nomeSetor,
+        gruposMap: new Map(),
+        classificacoesEstouradas: []
+      });
+    }
+
+    const setorEntry = setoresMap.get(nomeNorm);
+
+    // ── Grupo ────────────────────────────────────────────────────────────────
+    const grupoNome = registro.grupo || 'Sem grupo';
+    if (!setorEntry.gruposMap.has(grupoNome)) {
+      setorEntry.gruposMap.set(grupoNome, {
+        nome: grupoNome,
+        orcado: 0,
+        realizado: 0,
+        categoriasMap: new Map()
+      });
+    }
+
+    const grupo = setorEntry.gruposMap.get(grupoNome);
+
+    // ── Categoria ────────────────────────────────────────────────────────────
+    const categoriaNome = registro.categoria || 'Sem categoria';
+    if (!grupo.categoriasMap.has(categoriaNome)) {
+      grupo.categoriasMap.set(categoriaNome, {
+        nome: categoriaNome,
+        orcado: 0,
+        realizado: 0,
+        classificacoes: []
+      });
+    }
+
+    const categoria = grupo.categoriasMap.get(categoriaNome);
+
+    // ── Classificação ────────────────────────────────────────────────────────
+    const classificacaoNome =
+      registro.classificacao || registro.descricao || 'Sem classificacao';
+    const orcadoVal = Number.isFinite(registro.orcado) ? registro.orcado : 0;
+    const realizadoVal = Number.isFinite(registro.realizado) ? registro.realizado : 0;
+    const tipoLancamento = registro.movimento || registro.tipo || 'Saída';
+
+    categoria.classificacoes.push({
+      nome: classificacaoNome,
+      descricao: registro.descricao || '',
+      orcado: orcadoVal,
+      realizado: realizadoVal,
+      tipo: tipoLancamento
+    });
+
+    // Acumula para cima: categoria → grupo
+    categoria.orcado += orcadoVal;
+    categoria.realizado += realizadoVal;
+    grupo.orcado += orcadoVal;
+    grupo.realizado += realizadoVal;
+
+    // Detecta classificação estourada
+    if (orcadoVal > 0 && realizadoVal > orcadoVal) {
+      setorEntry.classificacoesEstouradas.push({
+        nome: classificacaoNome,
+        categoria: categoriaNome,
+        grupo: grupoNome,
+        orcado: orcadoVal,
+        realizado: realizadoVal
+      });
+    }
+  });
+
+  // ── Monta dadosProcessados iterando pelos setores da Categoria ────────────
   try {
     state.dadosProcessados = [];
     let setoresEncontrados = 0;
-    const setoresNaoEncontrados = [];
-    const setoresSemDetalhes = [];
+    const setoresSemContato = [];
 
-    fonteContatos.forEach((contato) => {
-      const nomeSetor = contato.nome || obterCampo(contato, 'nome_setor', 'setor', 'nome');
-      const telefone  = contato.numero;
-      // Se veio do banco, o nome já é normalizado; senão normaliza agora
-      const nomeNormalizado = contato._fromDb ? nomeSetor : normalizarTexto(nomeSetor);
-
-      if (!nomeNormalizado) return;
-
-      const registrosDetalhe = state.dadosCategoria.filter(
-        (registro) => normalizarTexto(registro.setor) === nomeNormalizado
-      );
-
-      if (registrosDetalhe.length === 0) {
-        setoresNaoEncontrados.push(nomeSetor);
-        return;
-      }
-
+    setoresMap.forEach((setorEntry, nomeNorm) => {
       setoresEncontrados += 1;
 
-      const gruposMap = new Map();
-      const classificacoesEstouradas = [];
+      const telefone = mapaFones.get(nomeNorm) || '';
+      if (!telefone) setoresSemContato.push(setorEntry.nomeOriginal);
 
-      registrosDetalhe.forEach((registro) => {
-        const grupoNome = registro.grupo || 'Sem grupo';
-        if (!gruposMap.has(grupoNome)) {
-          gruposMap.set(grupoNome, {
-            nome: grupoNome,
-            orcado: 0,
-            realizado: 0,
-            categoriasMap: new Map()
-          });
-        }
+      const grupos = Array.from(setorEntry.gruposMap.values()).map((grupo) => ({
+        nome: grupo.nome,
+        orcado: grupo.orcado,
+        realizado: grupo.realizado,
+        categorias: Array.from(grupo.categoriasMap.values()).map((cat) => ({
+          nome: cat.nome,
+          orcado: cat.orcado,
+          realizado: cat.realizado,
+          classificacoes: cat.classificacoes
+        }))
+      }));
 
-        const grupo = gruposMap.get(grupoNome);
-        const categoriaNome = registro.categoria || 'Sem categoria';
-
-        if (!grupo.categoriasMap.has(categoriaNome)) {
-          grupo.categoriasMap.set(categoriaNome, {
-            nome: categoriaNome,
-            orcado: 0,
-            realizado: 0,
-            classificacoes: []
-          });
-        }
-
-        const categoria = grupo.categoriasMap.get(categoriaNome);
-        const classificacaoNome =
-          registro.classificacao || registro.descricao || 'Sem classificacao';
-        const orcadoClassificacao = Number.isFinite(registro.orcado)
-          ? registro.orcado
-          : 0;
-        const realizadoClassificacao = Number.isFinite(registro.realizado)
-          ? registro.realizado
-          : 0;
-
-        // Identifica o tipo de lançamento (Entrada ou Saída)
-        const tipoLancamento = registro.movimento || registro.tipo || 'Saída';
-
-        categoria.classificacoes.push({
-          nome: classificacaoNome,
-          descricao: registro.descricao || '',
-          orcado: orcadoClassificacao,
-          realizado: realizadoClassificacao,
-          tipo: tipoLancamento
-        });
-
-        categoria.orcado += orcadoClassificacao;
-        categoria.realizado += realizadoClassificacao;
-        grupo.orcado += orcadoClassificacao;
-        grupo.realizado += realizadoClassificacao;
-
-        if (orcadoClassificacao > 0 && realizadoClassificacao > orcadoClassificacao) {
-          classificacoesEstouradas.push({
-            nome: classificacaoNome,
-            categoria: categoriaNome,
-            grupo: grupoNome,
-            orcado: orcadoClassificacao,
-            realizado: realizadoClassificacao
-          });
-        }
-      });
-
-      const grupos = Array.from(gruposMap.values()).map((grupo) => {
-        const categorias = Array.from(grupo.categoriasMap.values()).map(
-          (categoria) => ({
-            nome: categoria.nome,
-            orcado: categoria.orcado,
-            realizado: categoria.realizado,
-            classificacoes: categoria.classificacoes
-          })
-        );
-
-        return {
-          nome: grupo.nome,
-          orcado: grupo.orcado,
-          realizado: grupo.realizado,
-          categorias
-        };
-      });
-
-      if (grupos.length === 0) {
-        setoresSemDetalhes.push(nomeSetor);
-      }
-
-      const totalOrcado = grupos.reduce(
-        (soma, grupo) => soma + (grupo.orcado || 0),
-        0
-      );
-      const totalRealizado = grupos.reduce(
-        (soma, grupo) => soma + (grupo.realizado || 0),
-        0
-      );
+      // orcado e realizado do setor = soma direta das categorias
+      const totalOrcado = grupos.reduce((s, g) => s + (g.orcado || 0), 0);
+      const totalRealizado = grupos.reduce((s, g) => s + (g.realizado || 0), 0);
 
       state.dadosProcessados.push({
-        nome: nomeSetor,
+        nome: setorEntry.nomeOriginal,
         telefone,
         orcado: totalOrcado,
         realizado: totalRealizado,
         grupos,
-        classificacoes: classificacoesEstouradas,
+        classificacoes: setorEntry.classificacoesEstouradas,
         totalGrupos: grupos.length
       });
     });
 
-    if (setoresNaoEncontrados.length > 0) {
+    if (setoresSemContato.length > 0) {
       adicionarLog(
         'warning',
-        `${setoresNaoEncontrados.length} setores nao encontrados no orcamento: ${setoresNaoEncontrados.join(
-          ', '
-        )}`
+        `${setoresSemContato.length} setor(es) sem telefone cadastrado: ${setoresSemContato.join(', ')}`
       );
     }
 
-    if (setoresSemDetalhes.length > 0) {
-      adicionarLog(
-        'warning',
-        `${setoresSemDetalhes.length} setores sem detalhes de grupo/categoria: ${setoresSemDetalhes.join(
-          ', '
-        )}`
-      );
-    }
-
-    adicionarLog(
-      'success',
-      `${setoresEncontrados} setores processados com sucesso.`
-    );
+    adicionarLog('success', `${setoresEncontrados} setores processados com sucesso.`);
 
     if (state.dadosProcessados.length > 0) {
       adicionarLog(
@@ -284,6 +262,7 @@ export async function processarDados() {
     console.error('Erro detalhado:', error);
   }
 }
+
 
 export function carregarArquivoCategoria(event) {
   const file = event.target.files[0];
