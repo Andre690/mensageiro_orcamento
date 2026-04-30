@@ -284,7 +284,7 @@ export function carregarArquivoCategoria(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  processarArquivo(file, (error, dadosBrutos) => {
+  processarArquivo(file, async (error, dadosBrutos) => {
     if (error) {
       adicionarLog(
         'error',
@@ -354,7 +354,7 @@ export function carregarArquivoCategoria(event) {
       cardContatos.removeAttribute('title');
     }
 
-    processarDados();
+    await processarDados();
     refreshUI();
 
     // Se ainda não existirem contatos processados, sugere o gerenciador
@@ -374,7 +374,7 @@ export function carregarArquivoContatos(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  processarArquivo(file, (error, dadosBrutos) => {
+  processarArquivo(file, async (error, dadosBrutos) => {
     if (error) {
       adicionarLog(
         'error',
@@ -417,18 +417,18 @@ export function carregarArquivoContatos(event) {
       'success',
       `Arquivo de contatos carregado: ${state.dadosContatos.length} registros.`
     );
-    processarDados();
+    await processarDados();
     refreshUI();
     event.target.value = '';
   });
 }
 
-export function removerArquivoContatos() {
+export async function removerArquivoContatos() {
   state.dadosContatos = null;
   const input = document.getElementById('fileContatos');
   if (input) input.value = '';
   setStatus('statusContatos', 'Removido', '#666', 'uploadCard3');
   adicionarLog('info', 'Planilha de contatos removida. Apenas contatos salvos no banco serão usados.');
-  processarDados();
+  await processarDados();
   refreshUI();
 }
