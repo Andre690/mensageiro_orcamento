@@ -8,6 +8,11 @@ disparador-orcamento-api/node_modules
 !.env.example
 
 # ─── Pasta de testes e dados temporários ─────────────────────────
+tmp/
+temp/
+.cache/
+.npm/
+.pnpm-store/
 utils/
 
 # ─── PDFs gerados em qualquer lugar ─────────────────────────────
@@ -21,19 +26,31 @@ tmp_view.txt
 database.sqlite
 database.sqlite-shm
 database.sqlite-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
 
 
 # ─── Logs ────────────────────────────────────────────────────────
 logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # ─── Sistema operacional ─────────────────────────────────────────
 .DS_Store
 Thumbs.db
+Desktop.ini
 
 # ─── IDEs ────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
+
+coverage/
+.nyc_output/
+dist/
+build/
