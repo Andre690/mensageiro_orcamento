@@ -66,7 +66,7 @@ async function enviarPdfParaApi(number, dadosSetor) {
         media: base64,
         number,
         fileName,
-        caption: `Extrato orçamentário - ${dadosSetor?.nome || "Setor"}`
+        caption: `Relatório orçamentário - ${dadosSetor?.nome || "Setor"}`
     };
 
     try {
