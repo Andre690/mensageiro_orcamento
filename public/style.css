@@ -747,6 +747,113 @@ body {
     border-radius: 12px;
 }
 
+/* â”€â”€â”€ Modal de seleÃ§Ã£o de envio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.envio-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.envio-setor-block {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.envio-setor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+    gap: 12px;
+}
+
+.envio-setor-titulo {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #1e293b;
+    word-break: break-word;
+}
+
+.envio-btn-todos {
+    background: rgba(5, 110, 255, 0.12);
+    border: 1px solid rgba(5, 110, 255, 0.35);
+    color: #056eff;
+    padding: 6px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+}
+
+.envio-btn-todos:hover {
+    background: rgba(5, 110, 255, 0.18);
+}
+
+.envio-setor-body {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.envio-contato-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.envio-contato-row:hover {
+    border-color: #056eff;
+    background: #eef3ff;
+}
+
+.envio-contato-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #28a745;
+    flex-shrink: 0;
+}
+
+.envio-contato-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.envio-contato-nome {
+    font-weight: 800;
+    color: #222;
+}
+
+.envio-contato-tel {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.envio-vazio {
+    color: #666;
+    font-size: 0.9rem;
+    padding: 8px 6px;
+}
+
+.contato-subinfo {
+    font-size: 0.82rem;
+    color: #666;
+    margin-top: 2px;
+}
+
 /* ─── Footer do modal ────────────────────────────────────────────────────────── */
 .modal-footer {
     display: flex;
@@ -1009,4 +1116,4 @@ body {
     border-color: #dc3545;
     color: #dc3545;
 }
-
+

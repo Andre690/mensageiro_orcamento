@@ -2,6 +2,7 @@ import { state } from './state.js';
 import { adicionarLog } from './logger.js';
 import { calcularPercentual } from './metrics.js';
 import { enviarMensagemWhatsAppComRetry } from './api.js';
+import { normalizarTexto } from './utils.js';
 
 export function gerarMensagem(setor) {
   const percentual = calcularPercentual(setor.realizado, setor.orcado);
@@ -171,6 +172,131 @@ export async function dispararMensagens() {
 
   if (btn) {
     btn.disabled = false;
-    btn.innerHTML = '<span>📤</span> Disparar Mensagens para Setores';
+    btn.innerHTML = 'Disparar Mensagens para Setores';
+  }
+}
+
+function normalizarSetorParaChave(nome) {
+  return normalizarTexto(nome);
+}
+
+/**
+ * Dispara mensagens apenas para os contatos selecionados pelo usuário.
+ * @param {Map<string, Set<string>>} selecaoPorSetor Map<setor_normalizado, Set<telefone>>
+ */
+export async function dispararMensagensComSelecao(selecaoPorSetor) {
+  if (state.dadosProcessados.length === 0) {
+    adicionarLog('error', 'Nenhum setor carregado para disparo.');
+    return;
+  }
+
+  const apiStatus = document.getElementById('apiStatus');
+  if (apiStatus && apiStatus.textContent === 'OFFLINE') {
+    adicionarLog('warning', 'Teste a conexÃ£o com a API antes de iniciar o disparo.');
+    return;
+  }
+
+  const btn = document.getElementById('disparadorBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML =
+      '<div class="spinner" style="width: 20px; height: 20px;"></div> Enviando mensagens...';
+  }
+
+  const modoPDF = state.enviarPdfHabilitado ? ' (com PDF)' : '';
+  const totalSelecionados = Array.from(selecaoPorSetor?.values?.() || []).reduce(
+    (acc, set) => acc + (set?.size || 0),
+    0
+  );
+  adicionarLog(
+    'info',
+    `Iniciando disparo${modoPDF} para ${totalSelecionados} contato(s) em ${state.dadosProcessados.length} setores.`
+  );
+
+  let sucessos = 0;
+  let erros = 0;
+
+  for (const [index, setor] of state.dadosProcessados.entries()) {
+    try {
+      const setorNorm = normalizarSetorParaChave(setor.nome);
+      const telefonesSelecionadosSet = selecaoPorSetor?.get?.(setorNorm);
+      const telefonesSelecionados = Array.from(telefonesSelecionadosSet || []);
+
+      if (telefonesSelecionados.length === 0) {
+        adicionarLog(
+          'warning',
+          `${setor.nome} - nenhum contato selecionado. Setor ignorado no disparo.`
+        );
+        continue;
+      }
+
+      for (const [foneIndex, telefone] of telefonesSelecionados.entries()) {
+        const descricaoPdf = state.enviarPdfHabilitado ? ' + PDF' : '';
+        const indexSuffix =
+          telefonesSelecionados.length > 1
+            ? ` (Contato ${foneIndex + 1}/${telefonesSelecionados.length})`
+            : '';
+        adicionarLog(
+          'info',
+          `Enviando para ${setor.nome}${indexSuffix}${descricaoPdf} (${index + 1}/${state.dadosProcessados.length}).`
+        );
+
+        const mensagem = gerarMensagem(setor);
+        const resultado = await enviarMensagemWhatsAppComRetry(
+          mensagem,
+          telefone,
+          setor
+        );
+
+        if (resultado.success) {
+          let mensagemSucesso = `${setor.nome}${indexSuffix} - mensagem enviada com sucesso`;
+          const pdfInfo = resultado.pdf || resultado.response?.pdf;
+
+          if (state.enviarPdfHabilitado) {
+            if (pdfInfo?.success) {
+              mensagemSucesso += ' e PDF enviado';
+            } else if (pdfInfo && pdfInfo.success === false) {
+              mensagemSucesso += ' (PDF falhou)';
+              adicionarLog(
+                'warning',
+                `${setor.nome} - falha no envio do PDF: ${pdfInfo.message || 'sem detalhes'}`
+              );
+            } else {
+              mensagemSucesso += ' (PDF sem confirmaÃ§Ã£o)';
+            }
+          }
+
+          adicionarLog('success', mensagemSucesso);
+          sucessos += 1;
+        } else {
+          const errorMsg =
+            resultado.response?.message || resultado.error || 'Erro desconhecido';
+          adicionarLog('error', `${setor.nome}${indexSuffix} - erro: ${errorMsg}`);
+          erros += 1;
+        }
+
+        const intervalo = state.enviarPdfHabilitado ? 3000 : 2000;
+        if (index < state.dadosProcessados.length - 1 || foneIndex < telefonesSelecionados.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, intervalo));
+        }
+      }
+    } catch (error) {
+      adicionarLog('error', `${setor.nome} - erro: ${error.message}`);
+      erros += 1;
+
+      if (error.message.includes('rede') || error.message.includes('timeout')) {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      }
+    }
+  }
+
+  adicionarLog(
+    'info',
+    `Disparo finalizado. Sucessos: ${sucessos}. Erros: ${erros}.`
+  );
+
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = 'Disparar Mensagens para Setores';
   }
 }

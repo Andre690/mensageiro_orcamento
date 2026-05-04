@@ -8,13 +8,19 @@ import {
   removerArquivoContatos
 } from './dataLoader.js';
 import { refreshUI, recarregarDados } from './ui.js';
-import { dispararMensagens } from './messaging.js';
+import {
+  abrirModalSelecaoEnvio,
+  fecharModalSelecaoEnvio,
+  confirmarEnvioSelecionado
+} from './envio.js';
 import {
   abrirModalContatos,
   fecharModalContatos,
   abrirModalEscolhaContatos,
   fecharModalEscolha,
-  acionarImportacaoArquivo
+  acionarImportacaoArquivo,
+  fecharModalNomearContatosImportados,
+  salvarNomearContatosImportados
 } from './contatos.js';
 
 function bindEvents() {
@@ -31,7 +37,7 @@ function bindEvents() {
   if (togglePdfCheckbox) togglePdfCheckbox.addEventListener('change', toggleEnvioPDF);
 
   const disparadorBtn = document.getElementById('disparadorBtn');
-  if (disparadorBtn) disparadorBtn.addEventListener('click', dispararMensagens);
+  if (disparadorBtn) disparadorBtn.addEventListener('click', abrirModalSelecaoEnvio);
 
   const fileCategoria = document.getElementById('fileCategoria');
   if (fileCategoria) fileCategoria.addEventListener('change', carregarArquivoCategoria);
@@ -95,6 +101,28 @@ function bindEvents() {
     removerArquivoContatos();
     document.getElementById('btnRemoverPlanilhaModal').style.display = 'none';
   });
+
+  // Modal Nomear Contatos Importados
+  const modalNomear = document.getElementById('modalNomearContatosImportados');
+  if (modalNomear) {
+    modalNomear.addEventListener('click', (e) => {
+      if (e.target === modalNomear) fecharModalNomearContatosImportados();
+    });
+  }
+  document.getElementById('btnFecharNomearImportados')?.addEventListener('click', fecharModalNomearContatosImportados);
+  document.getElementById('btnPularNomearImportados')?.addEventListener('click', fecharModalNomearContatosImportados);
+  document.getElementById('btnSalvarNomearImportados')?.addEventListener('click', salvarNomearContatosImportados);
+
+  // â”€â”€ Modal SeleÃ§Ã£o de Envio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const modalSelecao = document.getElementById('modalSelecaoEnvio');
+  if (modalSelecao) {
+    modalSelecao.addEventListener('click', (e) => {
+      if (e.target === modalSelecao) fecharModalSelecaoEnvio();
+    });
+  }
+  document.getElementById('btnFecharSelecaoEnvio')?.addEventListener('click', fecharModalSelecaoEnvio);
+  document.getElementById('btnCancelarSelecaoEnvio')?.addEventListener('click', fecharModalSelecaoEnvio);
+  document.getElementById('btnConfirmarSelecaoEnvio')?.addEventListener('click', confirmarEnvioSelecionado);
 }
 
 
@@ -112,4 +140,4 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     testarAPI();
   }, 1000);
-});
+});

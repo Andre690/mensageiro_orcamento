@@ -11,14 +11,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Disparador de Mensagens</h1>
+            <h1>Disparador de Mensagens</h1>
             <p>Sistema de Controle Orçamentário - WhatsApp</p>
         </div>
         
         <div class="main-content">
             <!-- Configuração da API -->
             <div class="config-section">
-                <h2>⚙️ Conexão com a API WhatsApp 
+                <h2>Conexão com a API WhatsApp 
                     <span class="api-status offline" id="apiStatus">OFFLINE</span>
                 </h2>
                 <div class="config-grid">
@@ -27,23 +27,23 @@
                 </div>
 
                 <div id="qrCodeContainer" style="display:none; margin-top: 15px; text-align: center;">
-                    <p>📷 Escaneie o QR Code abaixo para conectar o WhatsApp:</p>
+                    <p>Escaneie o QR Code abaixo para conectar o WhatsApp:</p>
                     <img id="qrCodeImage" src="" alt="QR Code" style="max-width: 250px; border: 5px solid #25D366; border-radius: 12px;">
                 </div>
             </div>
 
             <!-- Upload de Arquivos -->
             <div class="section">
-                <h2>📋 Carregar Planilhas
+                <h2>Carregar Planilhas
                     <button class="refresh-btn" id="refreshBtn">Atualizar</button>
                 </h2>
                 <div class="alert alert-info">
-                    <strong>💡 Dica:</strong> Carregue as 2 planilhas (Excel .xlsx/.xls ou CSV) para visualizar os dados mais recentes. Os arquivos serão processados automaticamente.
+                    <strong>Dica:</strong> Carregue as 2 planilhas (Excel .xlsx/.xls ou CSV) para visualizar os dados mais recentes. Os arquivos serão processados automaticamente.
                 </div>
                 <div class="file-upload">
                     
                     <div class="upload-card" id="uploadCard2">
-                        <div class="file-icon">📋</div>
+                        <div class="file-icon">Arquivo</div>
                         <strong>Orçado x Realizado</strong>
                         <p style="margin: 10px 0; color: #666;">Orçado e Realizado Detalhado</p>
                         <label class="file-label" for="fileCategoria">
@@ -54,7 +54,7 @@
                     </div>
                     
                     <div class="upload-card upload-card-action upload-card-disabled" id="uploadCardContatos" title="Carregue a planilha de orçamento primeiro">
-                        <div class="file-icon">📞</div>
+                        <div class="file-icon">Contatos</div>
                         <strong>Contatos dos Setores</strong>
                         <p style="margin: 10px 0; color: #666;">Importe via planilha ou gerencie manualmente</p>
                         <button class="file-label btn-gerenciar" id="btnGerenciarContatos">
@@ -70,28 +70,28 @@
             <div class="stats-grid">
                 <div class="stat-card danger">
                     <div class="stat-number" id="setoresUltrapassados">-</div>
-                    <div class="stat-label">🚨 Setores Ultrapassados</div>
+                    <div class="stat-label">Setores Ultrapassados</div>
                 </div>
                 <div class="stat-card warning">
                     <div class="stat-number" id="setoresProximos">-</div>
-                    <div class="stat-label">⚠️ Setores Próximos (90%+)</div>
+                    <div class="stat-label">Setores Proximos (90%+)</div>
                 </div>
                 <div class="stat-card success">
                     <div class="stat-number" id="setoresControlados">-</div>
-                    <div class="stat-label">✅ Setores Controlados</div>
+                    <div class="stat-label">Setores Controlados</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="totalSetores">-</div>
-                    <div class="stat-label">📈 Total de Setores</div>
+                    <div class="stat-label">Total de Setores</div>
                 </div>
             </div>
             
             <!-- Relatório de Setores -->
             <div class="section">
-                <h2>📈 Situação dos Setores</h2>
+                <h2>Situacao dos Setores</h2>
                 <div id="setoresList">
                     <div class="alert alert-warning">
-                        <strong>⚠️ Atenção:</strong> Carregue os arquivos Excel acima para visualizar os dados dos setores.
+                        <strong>Atencao:</strong> Carregue os arquivos Excel acima para visualizar os dados dos setores.
                     </div>
                 </div>
             </div>
@@ -99,7 +99,6 @@
             <!-- Controles de Envio -->
             <div class="send-controls">
                 <button class="btn" id="disparadorBtn" disabled>
-                    <span>📤</span>
                     Disparar Mensagens para Setores
                 </button>
             </div>
@@ -108,7 +107,6 @@
                 <div class="pdf-checkbox-container">
                     <input type="checkbox" id="togglePdfCheckbox" checked>
                     <label for="togglePdfCheckbox">
-                        <span class="checkbox-icon">📄</span>
                         Enviar PDF junto com a mensagem
                     </label>
                 </div>
@@ -116,7 +114,7 @@
             
             <!-- Log de Envios -->
             <div class="section">
-                <h2>📝 Log de Envios</h2>
+                <h2>Log de Envios</h2>
                 <div class="log-container" id="logContainer">
                     <div class="log-item log-info">
                         Sistema inicializado. Configure a API e carregue os arquivos Excel para começar...
@@ -130,18 +128,18 @@
 <div class="modal-overlay" id="modalEscolhaContatos" role="dialog" aria-modal="true">
     <div class="modal-box modal-box-sm">
         <div class="modal-header">
-            <h2>📞 Como deseja informar os contatos?</h2>
+            <h2>Como deseja informar os contatos?</h2>
             <button class="modal-close" id="btnEscolhaFechar" aria-label="Fechar">✕</button>
         </div>
         <p class="modal-subtitle">Escolha como deseja cadastrar os números de WhatsApp dos setores identificados na planilha.</p>
         <div class="modal-escolha-opcoes">
             <button class="opcao-card" id="btnEscolhaArquivo">
-                <span class="opcao-icon">📂</span>
+                <span class="opcao-icon">Arquivo</span>
                 <strong>Importar via Arquivo</strong>
                 <span class="opcao-desc">Carregue uma planilha (.xlsx / .csv) com os contatos dos setores</span>
             </button>
             <button class="opcao-card" id="btnEscolhaDigitar">
-                <span class="opcao-icon">✏️</span>
+                <span class="opcao-icon">Manual</span>
                 <strong>Digitar / Usar Contatos Salvos</strong>
                 <span class="opcao-desc">Cadastre ou edite os números manualmente. Contatos salvos são carregados automaticamente</span>
             </button>
@@ -153,13 +151,13 @@
 <div class="modal-overlay" id="modalContatos" role="dialog" aria-modal="true" aria-labelledby="modalContatosTitulo">
     <div class="modal-box">
         <div class="modal-header">
-            <h2 id="modalContatosTitulo">📞 Contatos dos Setores</h2>
+            <h2 id="modalContatosTitulo">Contatos dos Setores</h2>
             <button class="modal-close" id="btnFecharModalContatos" aria-label="Fechar modal">✕</button>
         </div>
         <p class="modal-subtitle">Adicione um ou mais contatos por setor. Os números salvos são usados automaticamente nos próximos disparos.</p>
         <div class="modal-actions-top" style="display: flex; gap: 10px; margin-bottom: 15px; padding: 0 24px;">
-            <button class="btn" id="btnAnexarPlanilhaModal" style="flex: 1; font-size: 0.85rem; padding: 8px;">📂 Subir Planilha</button>
-            <button class="btn" id="btnRemoverPlanilhaModal" style="flex: 1; font-size: 0.85rem; padding: 8px; background: #dc3545; color: white; border: none; display: none;">🗑️ Remover Planilha</button>
+            <button class="btn" id="btnAnexarPlanilhaModal" style="flex: 1; font-size: 0.85rem; padding: 8px;">Subir Planilha</button>
+            <button class="btn" id="btnRemoverPlanilhaModal" style="flex: 1; font-size: 0.85rem; padding: 8px; background: #dc3545; color: white; border: none; display: none;">Remover Planilha</button>
         </div>
         <div class="modal-body">
             <div id="listaContatosModal" class="lista-contatos-modal">
@@ -167,7 +165,45 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-modal-salvar" id="btnConcluidoContatos">✅ Concluído</button>
+            <button class="btn btn-modal-salvar" id="btnConcluidoContatos">Concluido</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nomear contatos importados (planilha nÃ£o possui nomes) -->
+<div class="modal-overlay" id="modalNomearContatosImportados" role="dialog" aria-modal="true" aria-labelledby="modalNomearImportadosTitulo">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="modalNomearImportadosTitulo">Nomear contatos importados</h2>
+            <button class="modal-close" id="btnFecharNomearImportados" aria-label="Fechar modal">X</button>
+        </div>
+        <p class="modal-subtitle">A planilha tem apenas setor e nÃºmero. Informe um nome para cada contato (ex.: Gerente, Coordenador). Isso aparece na seleÃ§Ã£o de envio.</p>
+        <div class="modal-body">
+            <div id="listaNomearContatosImportados" class="lista-contatos-modal"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-modal-cancelar" id="btnPularNomearImportados">Pular</button>
+            <button class="btn btn-modal-salvar" id="btnSalvarNomearImportados">Salvar contatos</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Selecionar contatos para envio -->
+<div class="modal-overlay" id="modalSelecaoEnvio" role="dialog" aria-modal="true" aria-labelledby="modalSelecaoEnvioTitulo">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="modalSelecaoEnvioTitulo">Selecionar contatos para envio</h2>
+            <button class="modal-close" id="btnFecharSelecaoEnvio" aria-label="Fechar modal">X</button>
+        </div>
+        <p class="modal-subtitle">
+            Marque para quais contatos cada setor receberÃ¡ a mensagem. <strong id="envioResumoSelecao">0 selecionado(s)</strong>
+        </p>
+        <div class="modal-body">
+            <div id="listaSelecaoEnvio" class="envio-lista"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-modal-cancelar" id="btnCancelarSelecaoEnvio">Cancelar</button>
+            <button class="btn btn-modal-salvar" id="btnConfirmarSelecaoEnvio">Enviar selecionados</button>
         </div>
     </div>
 </div>

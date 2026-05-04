@@ -7,7 +7,13 @@ import {
 } from './utils.js';
 import { adicionarLog } from './logger.js';
 import { refreshUI } from './ui.js';
-import { buscarContatosAgrupados, abrirModalEscolhaContatos } from './contatos.js';
+import {
+  buscarContatosAgrupados,
+  abrirModalEscolhaContatos,
+  abrirModalNomearContatosImportados,
+  abrirModalContatos,
+  importarContatosDaPlanilha
+} from './contatos.js';
 
 function setStatus(id, texto, cor, loadedCardId) {
   const statusEl = document.getElementById(id);
@@ -429,12 +435,42 @@ export function carregarArquivoContatos(event) {
       return;
     }
 
-    state.dadosContatos = registros;
+    const { contatosNovos = [], setoresAfetados = [] } = await importarContatosDaPlanilha(registros);
+
+    // Como os contatos foram salvos no banco, nÃ£o mantÃ©m planilha em memÃ³ria para evitar duplicidade.
+    state.dadosContatos = null;
+
     setStatus('statusContatos', 'Carregado', '#28a745', 'uploadCard3');
     adicionarLog(
       'success',
-      `Arquivo de contatos carregado: ${state.dadosContatos.length} registros.`
+      `Arquivo de contatos processado: ${registros.length} registro(s). Novos salvos: ${contatosNovos.length}.`
     );
+
+    // A planilha de contatos nÃ£o possui nome_contato. Abre pop-up para nomear e salvar no banco.
+    // Abre gerenciador com os setores afetados (para o usuÃ¡rio conferir)
+    const setoresPlanilha = Array.from(
+      new Set(
+        registros
+          .map((r) => (r?.nome || r?.setor || '').toString().trim())
+          .filter(Boolean)
+      )
+    ).sort();
+
+    if (setoresPlanilha.length > 0) {
+      abrirModalContatos(setoresPlanilha);
+    } else if (setoresAfetados.length > 0) {
+      abrirModalContatos(setoresAfetados);
+    }
+
+    // Pede nomes apenas para contatos que ainda nÃ£o estavam salvos
+    if (contatosNovos.length > 0) {
+      setTimeout(() => {
+        abrirModalNomearContatosImportados(contatosNovos);
+      }, 200);
+    } else {
+      adicionarLog('info', 'Nenhum contato novo encontrado na planilha. Nada a nomear.');
+    }
+
     await processarDados();
     refreshUI();
     event.target.value = '';
