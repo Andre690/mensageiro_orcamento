@@ -387,13 +387,31 @@ export function carregarArquivoContatos(event) {
     const registros = [];
 
     dadosBrutos.forEach((linhaOriginal) => {
-      const nomeSetor = obterCampo(linhaOriginal, 'nome_setor', 'setor', 'nome');
-      const numeroBruto = obterCampo(linhaOriginal, 'numero', 'telefone', 'contato');
+      // Aceita o mesmo formato do exemplo `utils/contato_setores.xlsx`:
+      // colunas: "nome" e "numero"
+      const nomeSetor = obterCampo(
+        linhaOriginal,
+        'nome_setor',
+        'setor_nome',
+        'setor',
+        'nome do setor',
+        'nome'
+      );
+      const numeroBruto = obterCampo(
+        linhaOriginal,
+        'numero',
+        'número',
+        'telefone',
+        'celular',
+        'whatsapp',
+        'contato'
+      );
 
       if (!nomeSetor || !numeroBruto) return;
 
       const { telefone, warnings } = formatarTelefone(numeroBruto);
       warnings.forEach((mensagem) => adicionarLog('warning', mensagem));
+      if (!telefone) return;
 
       registros.push({
         nome: nomeSetor,
@@ -405,7 +423,7 @@ export function carregarArquivoContatos(event) {
     if (registros.length === 0) {
       adicionarLog(
         'error',
-        'Arquivo de contatos deve conter as colunas "nome_setor" e "numero".'
+        'Arquivo de contatos deve conter as colunas "nome" e "numero" (ou equivalentes como "setor" e "telefone").'
       );
       setStatus('statusContatos', 'Formato invalido', '#dc3545');
       return;
@@ -431,4 +449,4 @@ export async function removerArquivoContatos() {
   adicionarLog('info', 'Planilha de contatos removida. Apenas contatos salvos no banco serão usados.');
   await processarDados();
   refreshUI();
-}
+}
